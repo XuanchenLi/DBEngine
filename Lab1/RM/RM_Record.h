@@ -4,6 +4,7 @@
 #include <tuple>
 #include <iostream>
 #include "RM_Rid.h"
+#include "utils/RC.h"
 
 struct RM_Record {
 

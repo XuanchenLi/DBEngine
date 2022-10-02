@@ -37,6 +37,7 @@ private:
     
     MM_BufferUnit* units;
     std::unordered_map<FM_Bid, int, Bid_Hash> hashTbl;
+    std::list<int> victimList;
     std::list<int> freeList;
 };
 

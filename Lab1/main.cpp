@@ -48,44 +48,45 @@ int main(int argc, char* argv[]) {
     //--------更新数据字典------------
     
     RM_TableHandler tblHandler((DBT_DIR + "tables").c_str());
-    RM_Record rec;
     SString<64> DBName;
     SString<64> TblName;
-    rec.addr = new char[sizeof(TBL_DIC_ROW)];
-    rec.len = sizeof(TBL_DIC_ROW);
-    status = tblHandler.GetNextFreeSlot(rec.rid);
-    //std::cout<<rec.rid.num<<rec.rid.slot<<std::endl;
+
     strcpy(DBName.msg, argv[1]);
     strcpy(TblName.msg, "banking");
-    rec.SetContent<TBL_DIC_ROW>(TBL_DIC_ROW(
+    tblHandler.Insert<TBL_DIC_ROW>(TBL_DIC_ROW(
         DBName,
         TblName,
         'S',
         0
     ));
-    status = tblHandler.InsertRec(rec);
+
     //
-    tblHandler.GetNextFreeSlot(rec.rid);
     strcpy(DBName.msg, "db_schema");
     strcpy(TblName.msg, "columns");
-    rec.SetContent<TBL_DIC_ROW>(TBL_DIC_ROW(
+    tblHandler.Insert<TBL_DIC_ROW>(TBL_DIC_ROW(
         DBName,
         TblName,
         'S',
         0
     ));
-    tblHandler.InsertRec(rec);
     //
-    tblHandler.GetNextFreeSlot(rec.rid);
     strcpy(DBName.msg, "db_schema");
     strcpy(TblName.msg, "tables");
-    rec.SetContent<TBL_DIC_ROW>(TBL_DIC_ROW(
+    tblHandler.Insert<TBL_DIC_ROW>(TBL_DIC_ROW(
         DBName,
         TblName,
         'S',
         0
     ));
-    tblHandler.InsertRec(rec);
+
+    tblHandler.Insert<TBL_DIC_ROW>(
+        TBL_DIC_ROW(
+        DBName,
+        TblName,
+        'S',
+        0
+    )
+    );
 
     tblHandler.CloseTbl();
 
@@ -95,19 +96,15 @@ int main(int argc, char* argv[]) {
     SString<30> branchName;
     char bN[5][30] = {"Downtown", "Perryridge", "Redwood", "Mianus", "Brighton"};
     double balance;
-    delete rec.addr;
-    rec.addr = new char[sizeof(tuple<SString<10>, SString<30>, double>)];
-    rec.len = sizeof(tuple<SString<10>, SString<30>, double>);
+
     tblHandler.OpenTbl((WORK_DIR + "banking").c_str());
     for (int i = 0; i < 10000; ++i) {
         strcpy(accNum.msg, ("A-" + to_string(i)).c_str());
         strcpy(branchName.msg, bN[i%5]);
         balance = rand() % 100000;
-        tblHandler.GetNextFreeSlot(rec.rid);
-        rec.SetContent<tuple<SString<10>, SString<30>, double>> (
+        tblHandler.Insert<tuple<SString<10>, SString<30>, double>> (
             make_tuple(accNum, branchName, balance)
         );
-        tblHandler.InsertRec(rec);
     }
     
     //--------读出记录----------------
@@ -117,6 +114,7 @@ int main(int argc, char* argv[]) {
     printf("%s %s %s\n", accNum.msg, branchName.msg, "balance");
     tuple<SString<10>, SString<30>, double> item;
 
+    RM_Record rec;
     tblHandler.GetIter(iter);
     do {
         rec = iter.NextRec();

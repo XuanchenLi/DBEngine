@@ -4,11 +4,11 @@
 #include <utility>
 #include <string>
 #include <iostream>
+#include "RM/RM_Record.h"
 #include "utils/RC.h"
 #include "FM/FM_FileHandler.h"
 
 struct RM_Rid;
-struct RM_Record;
 class FM_FileHandler;
 class RM_TblIterator;
 
@@ -33,17 +33,35 @@ public:
     
     RC OpenTbl(const char* tblPath);
     RC CloseTbl();
-    RC InsertRec(const RM_Record&);
+    template<typename T>
+    RC Insert(T);
     RC GetRec(const RM_Rid&, RM_Record&);
-    RC GetNextFreeSlot(RM_Rid&);
     RC GetIter(RM_TblIterator& iter);
 
     //void test() {std::cout<<fHandler->GetFileHdr().firstFreeHole<<std::endl;}
 private:
+    RC InsertRec(const RM_Record&);
+    RC GetNextFreeSlot(RM_Rid&);
     FM_FileHandler* fHandler;
     //int recLen;
     bool isChanged;
 };
+
+template<typename T>
+RC RM_TableHandler::Insert(T obj) {
+    RM_Record rec;
+    rec.addr = new char[sizeof(T)];
+    rec.len = sizeof(T);
+    int rc = this->GetNextFreeSlot(rec.rid);
+    if (rc!=SUCCESS)
+        return rc;
+
+    rec.SetContent<T>(obj);
+    rc = this->InsertRec(rec);
+    delete[] rec.addr;
+    return rc;
+}
+
 
 
 #endif

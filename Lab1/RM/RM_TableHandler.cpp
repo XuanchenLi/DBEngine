@@ -163,3 +163,4 @@ RC RM_TableHandler::GetIter(RM_TblIterator& iter) {
     iter.tHandler = *this;
     return SUCCESS;
 }
+

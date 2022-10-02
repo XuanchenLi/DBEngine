@@ -14,8 +14,12 @@ extern FM_Manager* fM_Manager;
 MM_Buffer::MM_Buffer(unsigned int s) {
     
     this->hashTbl.clear();
+    this->victimList.clear();
     this->freeList.clear();
     this->units = new MM_BufferUnit[s];
+    for (int i = 0; i < s; ++i) {
+        this->freeList.push_back(i);
+    }
     
 }
 
@@ -36,9 +40,10 @@ RC MM_Buffer::Clear() {
             }
         }
         units[i].clear();
+        this->freeList.push_back(i);
     }
     hashTbl.clear();
-    freeList.clear();
+    victimList.clear();
     //std::cout<<"121"<<std::endl;
     return SUCCESS;
 }
@@ -58,12 +63,13 @@ RC MM_Buffer::Clear(int fd) {
                }
             }
             units[i].clear();
+            this->freeList.push_back(i);
         }
     }
     auto it = hashTbl.begin();
     while(it != hashTbl.end()){
       if(it->first.fd == fd) {
-        freeList.remove(it->second);
+        victimList.remove(it->second);
         hashTbl.erase(it++);
       }
       else
@@ -108,7 +114,7 @@ RC MM_Buffer::Pin(FM_Bid bid) {
         return NOT_EXIST;
     int idx = pr->second;
     if (units[idx].refCount == 0) {
-        freeList.remove(idx);
+        victimList.remove(idx);
     }
     units[idx].refCount++;
     return SUCCESS;
@@ -122,7 +128,7 @@ RC MM_Buffer::Unpin(FM_Bid bid) {
     if (units[idx].refCount <= 0) return FAILURE;
     units[idx].refCount--;
     if (units[idx].refCount == 0) {
-        freeList.push_back(idx);
+        victimList.push_back(idx);
     }
     return SUCCESS;
 }
@@ -168,14 +174,14 @@ RC MM_Buffer::GetPage(FM_Bid bid, MM_PageHandler& hdl) {
     return SUCCESS;
 }
 int MM_Buffer::GetEmpty() {
-    for (int i = 0; i < BUFFER_SIZE; ++i) {
-        if (units[i].bid.fd <0) {
-            return i;
-        }
-    }
-    if (!freeList.empty()) {
+    if (!this->freeList.empty()) {
         int res = freeList.front();
         freeList.pop_front();
+        return res;
+    }
+    if (!victimList.empty()) {
+        int res = victimList.front();
+        victimList.pop_front();
         ForcePage(units[res].bid);
         hashTbl.erase(units[res].bid);
         units[res].clear();
