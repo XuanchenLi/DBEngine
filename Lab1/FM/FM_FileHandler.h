@@ -15,6 +15,7 @@ public:
     RC GetBlock(int bNum, char* buf);
     RC WriteBlock(int bNum, char* buf);
     int GetNextFree();
+    int GetNextFree(int len);  // len包括记录前缀长不包括头部长
     
 
     int GetBlockNum() const  {return fHdr.blkCnt;}

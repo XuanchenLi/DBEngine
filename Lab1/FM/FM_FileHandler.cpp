@@ -4,6 +4,7 @@
 #include <iostream>
 #include "FM/FM_FileHandler.h"
 #include "MM/MM_PageHeader.h"
+#include "RM/RM_RecHeader.h"
 #include "main.h"
 
 extern unsigned int BLOCK_SIZE;
@@ -58,6 +59,53 @@ int FM_FileHandler::GetNextFree() {
     if (fHdr.firstFreeHole > 0) {
         //std::cout<<fHdr.firstFreeHole<<std::endl;
         return fHdr.firstFreeHole;
+    }
+    MM_PageHdr newPHdr;
+    //std::cout<<newPHdr.freeOff<<std::endl;
+    newPHdr.nextFreePage = this->fHdr.firstFreeHole;
+    newPHdr.preFreePage = 0;
+    newPHdr.freeBtsCnt = BLOCK_SIZE - sizeof(MM_PageHdr);
+    //std::cout<<this->fHdr.blkCnt<<" "<<newPHdr.freeBtsCnt<<std::endl;
+    this->fHdr.firstFreeHole = this->fHdr.blkCnt;
+    int newBlk = this->fHdr.blkCnt;
+    this->changed = true;
+    lseek(this->fd, BLOCK_SIZE * newBlk, SEEK_SET);
+    //std::cout<<newPHdr.freeBtsCnt<<std::endl;
+    int res = write(this->fd, &newPHdr, sizeof(MM_PageHdr));
+
+    if (res != sizeof(MM_PageHdr))
+        return IO_ERROR;
+    this->fHdr.blkCnt ++;
+    this->changed = true;
+    return newBlk;
+}
+
+int FM_FileHandler::GetNextFree(int len) {
+    if (!this->isOpen)
+        return INVALID_OPTR;
+    int nextFree = fHdr.firstFreeHole;
+    int off = BLOCK_SIZE * nextFree;
+    MM_PageHdr tpHdr;
+    while (nextFree > 0) {
+        lseek(this->fd, off, SEEK_SET);
+        read(this->fd, &tpHdr, sizeof(MM_PageHdr));
+        if (tpHdr.freeOff - tpHdr.slotCnt*sizeof(RM_RecHdr) >= len + sizeof(RM_RecHdr))
+            return nextFree;
+        else {
+            RM_RecHdr trHdr;
+            int nextSlot = tpHdr.firstHole;
+            while(nextSlot >= 0) {
+                lseek(this->fd, off + sizeof(MM_PageHdr) + nextSlot*sizeof(RM_RecHdr), SEEK_SET);
+                read(this->fd, &trHdr, sizeof(RM_RecHdr));
+                if (trHdr.len >= len) {
+                    return nextFree;
+                }
+                lseek(this->fd, off + trHdr.off, SEEK_SET);
+                read(this->fd, &nextSlot, sizeof(int));
+            }
+        }
+        nextFree = tpHdr.nextFreePage;
+        off += BLOCK_SIZE;
     }
     MM_PageHdr newPHdr;
     //std::cout<<newPHdr.freeOff<<std::endl;

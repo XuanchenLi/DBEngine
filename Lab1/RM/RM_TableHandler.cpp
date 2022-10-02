@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 #include <iostream>
 #include "RM_TableHandler.h"
 #include "RM_RecHeader.h"
@@ -33,6 +34,36 @@ RC RM_TableHandler::GetNextFreeSlot(RM_Rid& res) {
         res.slot = pHdr.firstHole;
     }else {
         res.slot = pHdr.slotCnt;
+    }
+    return SUCCESS;
+}
+
+RC RM_TableHandler::GetNextFreeSlot(RM_Rid& res, int len) {
+    res.num = -1;
+    int bNum = this->fHandler->GetNextFree(len);  //
+    //std::cout<<bNum<<std::endl;
+    res.num = bNum;
+    MM_PageHandler pHdl;
+    int status;
+    if((status = gBuffer->GetPage(FM_Bid(this->fHandler->GetFd(), bNum), pHdl)) != SUCCESS) {
+        return status;
+    }
+    MM_PageHdr pHdr = pHdl.GetHeader();
+    if (pHdr.firstHole == -1)
+        res.slot = pHdr.slotCnt;
+    else {
+        res.slot = pHdr.firstHole;
+        RM_RecHdr trHdr;
+        while(res.slot >= 0) {
+            memcpy(&trHdr, pHdl.GetPtr(sizeof(MM_PageHdr) + res.slot*sizeof(RM_RecHdr)), sizeof(RM_RecHdr));
+            if (trHdr.len >= len) {
+                return SUCCESS;
+            }
+            memcpy(&res.slot, pHdl.GetPtr(trHdr.off), sizeof(RM_RecHdr));
+        }
+        if (res.slot == -1) {
+            res.slot = pHdr.slotCnt;
+        }
     }
     return SUCCESS;
 }
@@ -83,6 +114,9 @@ RC RM_TableHandler::InsertRec(const RM_Record& rec) {
 
     }else {
         memcpy(&rHdr, pHdl.GetPtr(off), sizeof(RM_RecHdr));
+        int nex = 0;
+        memcpy(&nex, pHdl.GetPtr(rHdr.off), sizeof(int));
+        pageHead.firstHole = nex;
         rHdr.isDeleted = false;
         rHdr.len = rec.len;
         //pageHead.freeBtsCnt -= rHdr.len;
@@ -133,6 +167,11 @@ RC RM_TableHandler::InsertRec(const RM_Record& rec) {
 
 RM_TableHandler::RM_TableHandler(const char* tblPath) {
     fHandler = new FM_FileHandler;
+    tblName = tblPath;
+    int idx = tblName.find_last_of('/');
+    if (idx != std::string::npos) {
+        tblName = tblName.substr(idx);
+    }
     OpenTbl(tblPath);
     //std::cout<<status<<std::endl;
 }
@@ -146,12 +185,15 @@ RM_TableHandler::~RM_TableHandler() {
 }
 
 RC RM_TableHandler::CloseTbl() {
+    isChanged = false;
+    tblName = ""; 
     return fM_Manager->CloseFile(*fHandler);
 }
 
 RC RM_TableHandler::OpenTbl(const char* path) {
 
     isChanged = false;
+    tblName = ""; 
     int status = fM_Manager->OpenFile(path, *fHandler);
     //std::cout<<status<<std::endl;
     return status;

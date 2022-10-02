@@ -27,6 +27,8 @@ public:
             delete fHandler;
         fHandler = new FM_FileHandler;
         *fHandler = *other.fHandler;
+        isChanged = other.isChanged;
+        tblName = other.tblName;
         return *this;
         //r.fHandler = nullptr;
     }
@@ -42,8 +44,10 @@ public:
 private:
     RC InsertRec(const RM_Record&);
     RC GetNextFreeSlot(RM_Rid&);
+    RC GetNextFreeSlot(RM_Rid&, int len); // len包括记录前缀长不包括头部长
     FM_FileHandler* fHandler;
     //int recLen;
+    std::string tblName;
     bool isChanged;
 };
 
