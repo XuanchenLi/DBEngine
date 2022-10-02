@@ -21,6 +21,7 @@ public:
     RC Reset();
 
 private:
+    //bool valid();
     RM_TableHandler tHandler;
     int curPNum;
     int curSNum;
