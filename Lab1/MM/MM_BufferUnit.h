@@ -15,7 +15,7 @@ class MM_BufferUnit {
 friend class MM_Buffer;
 
 public:
-    MM_BufferUnit(): dirty(false), refCount(0) {
+    MM_BufferUnit(): dirty(false), refCount(0), usedCount(0) {
         bid.fd = -1;
         bid.num = -1;
         content = (char*)malloc(BLOCK_SIZE);
@@ -36,12 +36,14 @@ private:
         bid.fd = -1;
         bid.num = -1;
         refCount = 0;
+        usedCount = 0;
         memset(content, 0, BLOCK_SIZE);
     }
 
     bool dirty;
     FM_Bid bid;
     int refCount;
+    int usedCount;
     char* content;
 };
 

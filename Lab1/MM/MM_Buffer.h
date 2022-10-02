@@ -15,8 +15,10 @@ struct Bid_Hash;
 class MM_Buffer {
 
 public:
+    enum Strategy{LRU = 1, CLOCK_SWEEP = 2};
+
     //MM_Buffer();
-    MM_Buffer(unsigned int);
+    MM_Buffer(unsigned int, Strategy s = LRU);
     ~MM_Buffer();
     MM_Buffer(const MM_Buffer &)=delete;
     MM_Buffer& operator= (const MM_Buffer &)=delete;
@@ -29,12 +31,13 @@ public:
     RC ForcePage(FM_Bid);
     RC ForcePage(int fd);
     RC SetDirty(FM_Bid);
+    
 
     int size() {return hashTbl.size();}
 
 private:
     int GetEmpty();
-    
+    Strategy strategy;
     MM_BufferUnit* units;
     std::unordered_map<FM_Bid, int, Bid_Hash> hashTbl;
     std::list<int> victimList;

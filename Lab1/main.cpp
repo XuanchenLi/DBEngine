@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
     BLOCK_SIZE = (unsigned int)atoi(argv[4]) << 10;
     BUFFER_SIZE = (unsigned int)atoi(argv[3]);
     PREALLOC_SIZE = (unsigned int)atoi(argv[2])<< 20;
-    gBuffer = new MM_Buffer(BUFFER_SIZE);
+    gBuffer = new MM_Buffer(BUFFER_SIZE, MM_Buffer::CLOCK_SWEEP);
     fM_Manager = new FM_Manager();
     fM_Manager->CreateDir("./DB");
     fM_Manager->CreateDir(DBT_DIR.c_str());

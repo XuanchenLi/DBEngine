@@ -11,8 +11,8 @@
 extern unsigned int BUFFER_SIZE;
 extern FM_Manager* fM_Manager;
 
-MM_Buffer::MM_Buffer(unsigned int s) {
-    
+MM_Buffer::MM_Buffer(unsigned int s, Strategy str) {
+    this->strategy = str;
     this->hashTbl.clear();
     this->victimList.clear();
     this->freeList.clear();
@@ -117,6 +117,7 @@ RC MM_Buffer::Pin(FM_Bid bid) {
         victimList.remove(idx);
     }
     units[idx].refCount++;
+    units[idx].usedCount++;
     return SUCCESS;
 }
 
@@ -180,8 +181,25 @@ int MM_Buffer::GetEmpty() {
         return res;
     }
     if (!victimList.empty()) {
-        int res = victimList.front();
-        victimList.pop_front();
+        int res = 0;
+        if (this->strategy == LRU) {
+            res = victimList.front();
+            victimList.pop_front();
+        }else if (this->strategy == CLOCK_SWEEP) {
+            auto it = this->victimList.begin();
+            while(true) {
+                if (this->units[*it].usedCount == 0) {
+                    res = *it;
+                    this->victimList.remove(*it);
+                    break;
+                } else {
+                   this->units[*it].usedCount--; 
+                   it++;
+                   if (it == this->victimList.end())
+                        it = this->victimList.begin();
+                }
+            }   
+        }
         ForcePage(units[res].bid);
         hashTbl.erase(units[res].bid);
         units[res].clear();
