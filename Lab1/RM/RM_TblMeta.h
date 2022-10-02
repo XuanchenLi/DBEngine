@@ -2,9 +2,11 @@
 #define RM_TBLMETA_H
 
 #include <string>
+#include <string.h>
 #include "main.h"
 
 struct RM_TblMeta {
+    std::string dbName;
     std::string tblName;
     int colNum;
     int type[MAXCOLNUM];
@@ -13,6 +15,7 @@ struct RM_TblMeta {
     int length[MAXCOLNUM];
     int isDynamic[MAXCOLNUM];
     int colPos[MAXCOLNUM];
+
 };
 
 

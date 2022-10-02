@@ -3,6 +3,7 @@
 #include <string.h>
 #include <string>
 #include <iostream>
+#include "utils/Optrs.h"
 #include "RM_TableHandler.h"
 #include "RM_RecHeader.h"
 #include "FM/FM_Manager.h"
@@ -167,11 +168,6 @@ RC RM_TableHandler::InsertRec(const RM_Record& rec) {
 
 RM_TableHandler::RM_TableHandler(const char* tblPath) {
     fHandler = new FM_FileHandler;
-    tblName = tblPath;
-    int idx = tblName.find_last_of('/');
-    if (idx != std::string::npos) {
-        tblName = tblName.substr(idx);
-    }
     OpenTbl(tblPath);
     //std::cout<<status<<std::endl;
 }
@@ -186,16 +182,31 @@ RM_TableHandler::~RM_TableHandler() {
 
 RC RM_TableHandler::CloseTbl() {
     isChanged = false;
-    tblName = ""; 
+    metaData.tblName = ""; 
     return fM_Manager->CloseFile(*fHandler);
 }
 
 RC RM_TableHandler::OpenTbl(const char* path) {
 
     isChanged = false;
-    tblName = ""; 
-    int status = fM_Manager->OpenFile(path, *fHandler);
+    std::string tmp = path;
+    int idx = tmp.find_last_of('/');
+    if (idx != std::string::npos) {
+        metaData.tblName = tmp.substr(idx + 1);
+        tmp = tmp.substr(0, idx);
+    }
+
+    idx = tmp.find_last_of('/');
+    metaData.dbName = tmp;
+    if (idx != std::string::npos) {
+        metaData.dbName = tmp.substr(idx + 1);
+    }
+
+    int status;
+    if (status = fM_Manager->OpenFile(path, *fHandler))
+        return status;
     //std::cout<<status<<std::endl;
+    status = InitTblMeta();
     return status;
 }
 
@@ -206,3 +217,10 @@ RC RM_TableHandler::GetIter(RM_TblIterator& iter) {
     return SUCCESS;
 }
 
+//TODO
+RC RM_TableHandler::InitTblMeta() {
+    RM_TableHandler tHandle((DBT_DIR + COL_DIC_NAME).c_str());
+    RM_TblIterator iter;
+    tHandle.GetIter(iter);
+
+}

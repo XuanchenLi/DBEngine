@@ -62,3 +62,8 @@ RC RM_TblIterator::SetTbl(const char* tblPath) {
     tHandler = RM_TableHandler(tblPath);
     return SUCCESS;
 }
+
+RC RM_TblIterator::SetLimits(const std::vector<optr>& lim) {
+    this->limits = lim;
+    Reset();
+}

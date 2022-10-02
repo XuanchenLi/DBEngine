@@ -7,10 +7,12 @@
 #include "RM/RM_Record.h"
 #include "utils/RC.h"
 #include "FM/FM_FileHandler.h"
+#include "RM_TblMeta.h"
 
 struct RM_Rid;
 class FM_FileHandler;
 class RM_TblIterator;
+struct RM_RecAux;
 
 class RM_TableHandler {
 friend class RM_TblIterator;
@@ -28,7 +30,7 @@ public:
         fHandler = new FM_FileHandler;
         *fHandler = *other.fHandler;
         isChanged = other.isChanged;
-        tblName = other.tblName;
+        metaData = other.metaData;
         return *this;
         //r.fHandler = nullptr;
     }
@@ -37,17 +39,22 @@ public:
     RC CloseTbl();
     template<typename T>
     RC Insert(T);
+
+    //TODO
+    //RC Insert(RM_RecAux);
+    
     RC GetRec(const RM_Rid&, RM_Record&);
     RC GetIter(RM_TblIterator& iter);
 
     //void test() {std::cout<<fHandler->GetFileHdr().firstFreeHole<<std::endl;}
 private:
+    RC InitTblMeta();
     RC InsertRec(const RM_Record&);
     RC GetNextFreeSlot(RM_Rid&);
     RC GetNextFreeSlot(RM_Rid&, int len); // len包括记录前缀长不包括头部长
     FM_FileHandler* fHandler;
     //int recLen;
-    std::string tblName;
+    RM_TblMeta metaData;
     bool isChanged;
 };
 
