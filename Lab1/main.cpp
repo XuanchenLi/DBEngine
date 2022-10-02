@@ -56,7 +56,6 @@ int main(int argc, char* argv[]) {
     tblHandler.Insert<TBL_DIC_ROW>(TBL_DIC_ROW(
         DBName,
         TblName,
-        'S',
         0
     ));
 
@@ -66,7 +65,6 @@ int main(int argc, char* argv[]) {
     tblHandler.Insert<TBL_DIC_ROW>(TBL_DIC_ROW(
         DBName,
         TblName,
-        'S',
         0
     ));
     //
@@ -75,7 +73,6 @@ int main(int argc, char* argv[]) {
     tblHandler.Insert<TBL_DIC_ROW>(TBL_DIC_ROW(
         DBName,
         TblName,
-        'S',
         0
     ));
 
@@ -83,7 +80,6 @@ int main(int argc, char* argv[]) {
         TBL_DIC_ROW(
         DBName,
         TblName,
-        'S',
         0
     )
     );

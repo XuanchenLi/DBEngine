@@ -21,7 +21,6 @@ struct RM_Record {
         return SUCCESS;
     }
 
-
 };
 
 
