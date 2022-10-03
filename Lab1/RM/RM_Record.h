@@ -20,6 +20,8 @@ struct RM_Record {
         len = sizeof(t);
         return SUCCESS;
     }
+    
+    //Get Data
 
 };
 
