@@ -20,6 +20,7 @@ FM_Manager* fM_Manager;
 MM_Buffer* gBuffer;
 std::string DBT_DIR = "./DB/db_schema/";
 std::string WORK_DIR = "./DB/";
+const char DIC_DB_NAME[] = "db_schema";
 const char TBL_DIC_NAME[] = "tables"; 
 const char COL_DIC_NAME[] = "columns"; 
 RM_TblMeta TBL_DIC_META;

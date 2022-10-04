@@ -4,6 +4,7 @@
 #include <string>
 #include <iostream>
 #include "utils/Optrs.h"
+#include "utils/DB_Option.h"
 #include "RM_TableHandler.h"
 #include "RM_RecHeader.h"
 #include "FM/FM_Manager.h"
@@ -206,6 +207,15 @@ RC RM_TableHandler::OpenTbl(const char* path) {
     if (status = fM_Manager->OpenFile(path, *fHandler))
         return status;
     //std::cout<<status<<std::endl;
+    if (metaData.dbName == DIC_DB_NAME && 
+        (metaData.tblName == TBL_DIC_NAME || metaData.tblName == COL_DIC_NAME))
+    {
+        if (metaData.tblName == TBL_DIC_NAME)
+            metaData = TBL_DIC_META;
+        else 
+            metaData = COL_DIC_META;
+        return SUCCESS;
+    }
     status = InitTblMeta();
     return status;
 }
@@ -222,5 +232,32 @@ RC RM_TableHandler::InitTblMeta() {
     RM_TableHandler tHandle((DBT_DIR + COL_DIC_NAME).c_str());
     RM_TblIterator iter;
     tHandle.GetIter(iter);
-
+    //设置查询条件
+    std::vector<DB_Opt> lims;
+    DB_Opt opt;
+    opt.colName = "dbName";
+    opt.optr = EQUAL;
+    opt.type = DB_STRING;
+    strcpy(opt.data.sData, metaData.dbName.c_str());
+    lims.push_back(opt);
+    opt.colName = "tblName";
+    opt.optr = EQUAL;
+    opt.type = DB_STRING;
+    strcpy(opt.data.sData, metaData.tblName.c_str());
+    lims.push_back(opt);
+    iter.SetLimits(lims);
+    RM_Record rec;
+    rec = iter.NextRec();
+    while(rec.rid.num != -1) {
+        char tmp[64];
+        rec.GetColData(tHandle.metaData, 2, tmp);
+        metaData.colName[metaData.colNum] = tmp;
+        rec.GetColData(tHandle.metaData, 3, &metaData.type[metaData.colNum]);
+        rec.GetColData(tHandle.metaData, 4, &metaData.length[metaData.colNum]);
+        rec.GetColData(tHandle.metaData, 5, &metaData.isPrimary[metaData.colNum]);
+        rec.GetColData(tHandle.metaData, 6, &metaData.isDynamic[metaData.colNum]);
+        rec.GetColData(tHandle.metaData, 7, &metaData.colPos[metaData.colNum]);
+        metaData.colNum ++;
+    }
+    tHandle.CloseTbl();
 }

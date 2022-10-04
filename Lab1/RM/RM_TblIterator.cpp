@@ -8,6 +8,7 @@
 #include "RM_RecHeader.h"
 #include "RM/RM_Record.h"
 #include "MM/MM_Buffer.h"
+#include "utils/DB_Option.h"
 #include "main.h"
 
 
@@ -27,7 +28,6 @@ RM_Record RM_TblIterator::NextRec() {
     {
         return res;
     }
-
     MM_PageHandler pHdr;
     RM_RecHdr tmpRHdr;
     while(curPNum < tHandler.fHandler->GetBlockNum()) {
@@ -44,7 +44,13 @@ RM_Record RM_TblIterator::NextRec() {
                 res.len = tmpRHdr.len;
                 //std::cout<<tmpRHdr.len<<std::endl;
                 res.addr = pHdr.GetPtr(tmpRHdr.off);
-                return res;
+                //------------------------------
+                res.InitPrefix(tHandler.metaData);
+                if (res.valid(tHandler.metaData, limits))
+                    return res;
+                else
+                    curSNum++;
+                //return res;
             }else {
                 curSNum ++;
             }
@@ -63,7 +69,8 @@ RC RM_TblIterator::SetTbl(const char* tblPath) {
     return SUCCESS;
 }
 
-RC RM_TblIterator::SetLimits(const std::vector<optr>& lim) {
+RC RM_TblIterator::SetLimits(const std::vector<DB_Opt>& lim) {
     this->limits = lim;
     Reset();
 }
+

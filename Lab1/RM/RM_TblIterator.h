@@ -5,6 +5,7 @@
 #include <vector>
 #include "utils/RC.h"
 #include "utils/Optrs.h"
+#include "utils/DB_Option.h"
 #include "RM_TableHandler.h"
 
 class RM_Record;
@@ -16,7 +17,7 @@ public:
     RM_TblIterator(){ curPNum = 1; curSNum = -1; tHandler = nullptr;}
     RM_TblIterator(const char* tblName) {SetTbl(tblName);};
     RC SetTbl(const char* tblName);
-    RC SetLimits(const std::vector<optr>&);
+    RC SetLimits(const std::vector<DB_Opt>&);
     RM_Record NextRec();  //num为-1代表读到尾
     RC Reset();
 
@@ -25,7 +26,7 @@ private:
     RM_TableHandler tHandler;
     int curPNum;
     int curSNum;
-    std::vector<optr> limits;
+    std::vector<DB_Opt> limits;
 };
 
 
