@@ -30,22 +30,28 @@ RM_Record RM_TblIterator::NextRec() {
     }
     MM_PageHandler pHdr;
     RM_RecHdr tmpRHdr;
+    //std::cout<<tHandler.fHandler->GetBlockNum()<<std::endl;
     while(curPNum < tHandler.fHandler->GetBlockNum()) {
         gBuffer->GetPage(FM_Bid(tHandler.fHandler->GetFd(), curPNum), pHdr);
         curSNum ++;
-        //std::cout<<curSNum<<std::endl;
+        //std::cout<<curPNum<<" "<<curSNum<<" "<<pHdr.GetHeader().slotCnt<<std::endl;
         int off = sizeof(MM_PageHdr) + curSNum * sizeof(RM_RecHdr);
         while(curSNum < pHdr.GetHeader().slotCnt) {
             //std::cout<<pHdr.GetHeader().slotCnt<<std::endl;
             memcpy(&tmpRHdr, pHdr.GetPtr(off), sizeof(RM_RecHdr));
             if (!tmpRHdr.isDeleted) {
+            
                 res.rid.num = curPNum;
                 res.rid.slot = curSNum;
                 res.len = tmpRHdr.len;
-                //std::cout<<tmpRHdr.len<<std::endl;
+                //std::cout<<res.rid.num<<" "<<res.rid.slot<<" "<<res.len<<std::endl;
+                //std::cout<<tmpRHdr.off<<std::endl;
+                //return res;
                 res.addr = pHdr.GetPtr(tmpRHdr.off);
+                //return res;
                 //------------------------------
                 res.InitPrefix(tHandler.metaData);
+                //return res;
                 if (res.valid(tHandler.metaData, limits))
                     return res;
                 else
@@ -59,7 +65,9 @@ RM_Record RM_TblIterator::NextRec() {
         curPNum ++;
         curSNum = -1;
     }
+    //std::cout<<"end"<<std::endl;
     res.rid.num = -1;
+    //std::cout<<"end"<<std::endl;
     return res;
 }
 

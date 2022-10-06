@@ -8,6 +8,7 @@
 #include "utils/RC.h"
 #include "FM/FM_FileHandler.h"
 #include "RM_TblMeta.h"
+#include "RM/RM_RecAux.h"
 
 struct RM_Rid;
 class FM_FileHandler;
@@ -45,6 +46,10 @@ public:
     
     RC GetRec(const RM_Rid&, RM_Record&);
     RC GetIter(RM_TblIterator& iter);
+    RC InsertRec(const RM_RecAux&);
+    const RM_TblMeta& GetMeta() const {
+        return metaData;
+    }
 
     //void test() {std::cout<<fHandler->GetFileHdr().firstFreeHole<<std::endl;}
 private:

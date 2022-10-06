@@ -6,7 +6,7 @@
 #include "utils/DBType.h"
 
 typedef struct DB_Option {
-    optr optr;
+    db_optr optr;
     std::string colName;
     dbType type;
     union {

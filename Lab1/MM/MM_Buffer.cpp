@@ -139,6 +139,7 @@ RC MM_Buffer::SetDirty(FM_Bid bid) {
     if (pr == hashTbl.end())
         return NOT_EXIST;
     int idx = pr->second;
+    //std::cout<<idx<<std::endl;
     units[idx].dirty = true;
     return SUCCESS;
 }

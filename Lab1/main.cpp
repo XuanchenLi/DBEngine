@@ -38,7 +38,7 @@ int main(int argc, char* argv[]) {
     }
     dbInit(argc, argv);
     //----------------------------------
-
+    task1();
     //----------------------------------
     dbClear();
 
@@ -70,7 +70,7 @@ void dbInit(int argc, char* argv[]) {
     //--------创建表文件--------------
     WORK_DIR += argv[1];
     WORK_DIR += "/";
-    fM_Manager->CreateTblFile((WORK_DIR + "banking").c_str());
+    fM_Manager->CreateTblFile((WORK_DIR + "account").c_str());
 
 
     //--------初始化数据字典结构-------
@@ -123,64 +123,174 @@ void dbInit(int argc, char* argv[]) {
     COL_DIC_META.isDynamic[1] = true;
     COL_DIC_META.isDynamic[2] = true;
     for (int i = 0; i < 8; ++i) 
-        TBL_DIC_META.colPos[i] = i;
+        COL_DIC_META.colPos[i] = i;
 
 
     //--------更新数据字典------------
     
-    RM_TableHandler tblHandler((DBT_DIR + "tables").c_str());
-    SString<64> DBName;
-    SString<64> TblName;
-
-    strcpy(DBName.msg, argv[1]);
-    strcpy(TblName.msg, "banking");
-    tblHandler.Insert<TBL_DIC_ROW>(TBL_DIC_ROW(
-        DBName,
-        TblName,
-        3,
-        0
-    ));
-
+    RM_TableHandler tblHandler((DBT_DIR + TBL_DIC_NAME).c_str());
+    RM_RecAux rAux;
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("dbName", argv[1])
+    );
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("tblName", "account")
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("colNum", 3)
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("rowNum", 0)
+    );
+    tblHandler.InsertRec(rAux);
+    rAux.Clear();
     //
-    strcpy(DBName.msg, "db_schema");
-    strcpy(TblName.msg, "columns");
-    tblHandler.Insert<TBL_DIC_ROW>(TBL_DIC_ROW(
-        DBName,
-        TblName,
-        8,
-        0
-    ));
+    
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("dbName", "db_schema")
+    );
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("tblName", "tables")
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("colNum", 4)
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("rowNum", 0)
+    );
+    tblHandler.InsertRec(rAux);
+    rAux.Clear();
     //
-    strcpy(DBName.msg, "db_schema");
-    strcpy(TblName.msg, "tables");
-    tblHandler.Insert<TBL_DIC_ROW>(TBL_DIC_ROW(
-        DBName,
-        TblName,
-        4,
-        0
-    ));
-
-
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("dbName", "db_schema")
+    );
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("tblName", "columns")
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("colNum", 8)
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("rowNum", 0)
+    );
+    tblHandler.InsertRec(rAux);
+    rAux.Clear();
     tblHandler.CloseTbl();
+    
+    //-------------------------------插入用户表字段描述--------------------------------------
+    //RM_TableHandler tblHandler2((DBT_DIR + COL_DIC_NAME).c_str());
+    tblHandler.OpenTbl((DBT_DIR + COL_DIC_NAME).c_str());
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("dbName", argv[1])
+    );
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("tblName", "account")
+    );
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("colName", "account_number")
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("dataType", DB_STRING)
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("length", 10)
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("colPos", 0)
+    );
+    rAux.bValue.push_back(
+        std::make_pair<std::string, bool>("isPrimary", true)
+    );
+    rAux.bValue.push_back(
+        std::make_pair<std::string, bool>("isDynamic", false)
+    );
+    tblHandler.InsertRec(rAux);
+    //h2.InsertRec(rAux);
+    rAux.Clear();
+    //
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("dbName", argv[1])
+    );
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("tblName", "account")
+    );
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("colName", "branch_name")
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("dataType", DB_STRING)
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("length", 30)
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("colPos", 1)
+    );
+    rAux.bValue.push_back(
+        std::make_pair<std::string, bool>("isPrimary", false)
+    );
+    rAux.bValue.push_back(
+        std::make_pair<std::string, bool>("isDynamic", true)
+    );
+    tblHandler.InsertRec(rAux);
+    rAux.Clear();
+    //
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("dbName", argv[1])
+    );
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("tblName", "account")
+    );
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("colName", "balance")
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("dataType", DB_DOUBLE)
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("length", 0)
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("colPos", 2)
+    );
+    rAux.bValue.push_back(
+        std::make_pair<std::string, bool>("isPrimary", false)
+    );
+    rAux.bValue.push_back(
+        std::make_pair<std::string, bool>("isDynamic", false)
+    );
+    tblHandler.InsertRec(rAux);
+    rAux.Clear();
+    //h2.CloseTbl();
+    tblHandler.CloseTbl();
+    
 }
 
 void task1() {
     //--------插入记录----------------
+    //std::cout<<WORK_DIR<<std::endl;
+    RM_TableHandler tblHandler((WORK_DIR + "account").c_str());
+    auto meta = tblHandler.GetMeta();
     
     SString<10> accNum;
     SString<30> branchName;
     char bN[5][30] = {"Downtown", "Perryridge", "Redwood", "Mianus", "Brighton"};
     double balance;
-    RM_TableHandler tblHandler;
-    tblHandler.OpenTbl((WORK_DIR + "banking").c_str());
-    for (int i = 0; i < 10000; ++i) {
-        strcpy(accNum.msg, ("A-" + to_string(i)).c_str());
-        strcpy(branchName.msg, bN[i%5]);
-        balance = rand() % 100000;
-        tblHandler.Insert<tuple<SString<10>, SString<30>, double>> (
-            make_tuple(accNum, branchName, balance)
+    RM_RecAux rAux;
+    for (int i = 0; i < 10; ++i) {
+        rAux.Clear();
+        rAux.strValue.push_back(
+            std::make_pair<std::string, std::string>("account_number", "A-" + to_string(i))
         );
+        rAux.strValue.push_back(
+            std::make_pair<std::string, std::string>("branch_name", bN[i%5])
+        );
+        rAux.lfValue.push_back(
+            std::make_pair<std::string, double>("balance", rand() % 100000)
+        );
+        tblHandler.InsertRec(rAux);
     }
+    
     
     //--------读出记录----------------
     RM_TblIterator iter;
@@ -191,13 +301,17 @@ void task1() {
 
     RM_Record rec;
     tblHandler.GetIter(iter);
+    char tStr1[64];
+    char tStr2[64];
+    double tLf;
     do {
         rec = iter.NextRec();
         if (rec.rid.num == -1)
             break;
-        memcpy(&item, rec.addr, rec.len);
-        //std::cout<<rec.rid.num<<" "<<rec.rid.slot<<std::endl;
-        printf("%s %s %lf\n", std::get<0>(item).msg, std::get<1>(item).msg, std::get<2>(item));
+        rec.GetColData(tblHandler.GetMeta(), 0, tStr1);
+        rec.GetColData(tblHandler.GetMeta(), 1, tStr2);
+        rec.GetColData(tblHandler.GetMeta(), 2, &tLf);
+        printf("%s %s %lf\n", tStr1, tStr2, tLf);
     }while(true);
     
     tblHandler.CloseTbl();

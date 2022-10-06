@@ -1,7 +1,7 @@
 #ifndef OPTRS_H
 #define OPTRS_H
 
-enum optr {
+enum db_optr {
     EQUAL = 1,
     NOT_EQUAL = 2,
     LESS = 3,

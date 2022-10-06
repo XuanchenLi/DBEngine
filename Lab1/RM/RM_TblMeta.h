@@ -3,6 +3,7 @@
 
 #include <string>
 #include <string.h>
+#include "RM/RM_RecPrefix.h"
 #include "main.h"
 
 struct RM_TblMeta {
@@ -32,14 +33,17 @@ struct RM_TblMeta {
             if (colName[i] == name)
                 return colPos[i];
         }
+        //std::cout<<name<<std::endl;
         return NOT_EXIST;
     }
     int GetIdxByName(const std::string& name) const {
+        //std::cout<<name<<std::endl;
         for (int i = 0; i < colNum; ++i) {
             if (colName[i] == name)
                 return i;
-            return NOT_EXIST;
         }
+        //std::cout<<name<<std::endl;
+        return NOT_EXIST;
     }
     std::string GetNameByPos(const int pos) const {
         for (int i = 0; i < colNum; ++i) {
@@ -47,6 +51,7 @@ struct RM_TblMeta {
                 return colName[i];
             }
         }
+        //std::cout<< pos <<std::endl;
         return "";
     }
     int GetStaticPartLen() const {

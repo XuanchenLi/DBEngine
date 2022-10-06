@@ -54,6 +54,7 @@ RC MM_PageHandler::Force() {
 }
 
 RC MM_PageHandler::SetDirty() {
+    //std::cout<<buf->GetBid().num<<std::endl;
     return gBuffer->SetDirty(buf->GetBid());
 }
 

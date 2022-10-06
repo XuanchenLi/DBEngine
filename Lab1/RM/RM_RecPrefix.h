@@ -5,6 +5,13 @@
 #include <string.h>
 #include "main.h"
 
+
+typedef struct PosInfo {
+    int start;
+    int end;
+}PosInfo;
+
+
 class RM_RecPrefix {
 public:
     RM_RecPrefix() {
@@ -33,7 +40,8 @@ public:
         used = oth.used;
         dColNum = oth.dColNum;
         posInfo = new PosInfo[oth.dColNum];
-        memcpy(posInfo, oth.posInfo, sizeof(PosInfo)*dColNum);
+        if (oth.posInfo != nullptr)
+            memcpy(posInfo, oth.posInfo, sizeof(PosInfo)*dColNum);
     }
     int size() {
         return sizeof(bool) + dColNum*sizeof(posInfo) + sizeof(int);
@@ -42,10 +50,6 @@ public:
     int dColNum;
     PosInfo* posInfo;
 };
-typedef struct PosInfo {
-    int start;
-    int end;
-}PosInfo;
 
 
 #endif

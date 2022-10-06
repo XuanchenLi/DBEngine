@@ -51,6 +51,7 @@ RC RM_TableHandler::GetNextFreeSlot(RM_Rid& res, int len) {
         return status;
     }
     MM_PageHdr pHdr = pHdl.GetHeader();
+    //std::cout<<pHdr.firstHole<<std::endl;
     if (pHdr.firstHole == -1)
         res.slot = pHdr.slotCnt;
     else {
@@ -87,6 +88,19 @@ RC RM_TableHandler::GetRec(const RM_Rid& rid, RM_Record& rec) {
     return SUCCESS;
 }
 
+RC RM_TableHandler::InsertRec(const RM_RecAux& rAux) {
+    RM_Record rec;
+    int status = rec.SerializeData(metaData, rAux);
+    
+    if (status != SUCCESS)
+        return status;
+    if ((status = GetNextFreeSlot(rec.rid, rec.len)) != SUCCESS)
+        return status;
+    //std::cout<<rec.rid.num<<" "<< rec.rid.slot<<" "<<rec.len<<std::endl;
+    return InsertRec(rec);
+    
+}
+
 
 RC RM_TableHandler::InsertRec(const RM_Record& rec) {
     MM_PageHandler pHdl;
@@ -95,11 +109,13 @@ RC RM_TableHandler::InsertRec(const RM_Record& rec) {
     if(status = gBuffer->GetPage(FM_Bid(this->fHandler->GetFd(), rec.rid.num), pHdl) != SUCCESS) {
         return status;
     }
+
     if (rec.rid.slot < 0) return INVALID_OPTR;
     RM_RecHdr rHdr;
     rHdr.isDeleted = false;
     rHdr.len = rec.len;
     MM_PageHdr pageHead = pHdl.GetHeader();
+    
     int off = sizeof(MM_PageHdr) + rec.rid.slot * sizeof(RM_RecHeader);
     if (rec.rid.slot == pageHead.slotCnt) {
         //std::cout<<pageHead.freeBtsCnt<<std::endl;
@@ -113,7 +129,7 @@ RC RM_TableHandler::InsertRec(const RM_Record& rec) {
         //std::cout<<off<<std::endl;
         memcpy(pHdl.GetPtr(rHdr.off), rec.addr, rec.len);
         //std::cout<<rHdr.off<<std::endl;
-
+        //std::cout<<pageHead.slotCnt<<std::endl;
     }else {
         memcpy(&rHdr, pHdl.GetPtr(off), sizeof(RM_RecHdr));
         int nex = 0;
@@ -129,6 +145,7 @@ RC RM_TableHandler::InsertRec(const RM_Record& rec) {
 
     if ((float)pageHead.freeBtsCnt / BLOCK_SIZE <= (1.0f - BLOCK_LIMIT)) {
         //不空闲
+        //std::cout<<pageHead.slotCnt<<std::endl;
         //std::cout<<pageHead.freeBtsCnt<<std::endl;
         if (pageHead.nextFreePage != -1 || pageHead.preFreePage != -1) {
             int pNum = pageHead.preFreePage;
@@ -161,8 +178,10 @@ RC RM_TableHandler::InsertRec(const RM_Record& rec) {
             }
         }
     }
-
+    //std::cout<<pageHead.slotCnt<<std::endl;
     pHdl.SetHeader(pageHead);
+
+    //std::cout<<pHdl.GetHeader().slotCnt<<std::endl;
     pHdl.SetDirty();
     return SUCCESS;
 }
@@ -188,24 +207,36 @@ RC RM_TableHandler::CloseTbl() {
 }
 
 RC RM_TableHandler::OpenTbl(const char* path) {
+    if (fHandler == nullptr) {
+        fHandler = new FM_FileHandler;
+    }
 
     isChanged = false;
+    metaData = RM_TblMeta();
     std::string tmp = path;
+    if (tmp[tmp.length() - 1] == '/') {
+        tmp = tmp.substr(0, tmp.length() - 1);
+    }  
+    
+    //std::cout<<tmp<<std::endl;
     int idx = tmp.find_last_of('/');
     if (idx != std::string::npos) {
         metaData.tblName = tmp.substr(idx + 1);
         tmp = tmp.substr(0, idx);
     }
-
     idx = tmp.find_last_of('/');
     metaData.dbName = tmp;
     if (idx != std::string::npos) {
         metaData.dbName = tmp.substr(idx + 1);
     }
-
+    //std::cout<<metaData.dbName<<std::endl;
+    //std::cout<<metaData.tblName<<std::endl;
+    
     int status;
+    
     if (status = fM_Manager->OpenFile(path, *fHandler))
         return status;
+    
     //std::cout<<status<<std::endl;
     if (metaData.dbName == DIC_DB_NAME && 
         (metaData.tblName == TBL_DIC_NAME || metaData.tblName == COL_DIC_NAME))
@@ -217,6 +248,7 @@ RC RM_TableHandler::OpenTbl(const char* path) {
         return SUCCESS;
     }
     status = InitTblMeta();
+    
     return status;
 }
 
@@ -233,6 +265,7 @@ RC RM_TableHandler::InitTblMeta() {
     RM_TblIterator iter;
     tHandle.GetIter(iter);
     //设置查询条件
+    
     std::vector<DB_Opt> lims;
     DB_Opt opt;
     opt.colName = "dbName";
@@ -247,9 +280,12 @@ RC RM_TableHandler::InitTblMeta() {
     lims.push_back(opt);
     iter.SetLimits(lims);
     RM_Record rec;
+    
     rec = iter.NextRec();
+    //std::cout<<rec.rid.num<<" "<<rec.rid.slot<<" "<<rec.len<<std::endl;
+    char tmp[64];
     while(rec.rid.num != -1) {
-        char tmp[64];
+        //std::cout<<"1231"<<std::endl;
         rec.GetColData(tHandle.metaData, 2, tmp);
         metaData.colName[metaData.colNum] = tmp;
         rec.GetColData(tHandle.metaData, 3, &metaData.type[metaData.colNum]);
@@ -258,6 +294,10 @@ RC RM_TableHandler::InitTblMeta() {
         rec.GetColData(tHandle.metaData, 6, &metaData.isDynamic[metaData.colNum]);
         rec.GetColData(tHandle.metaData, 7, &metaData.colPos[metaData.colNum]);
         metaData.colNum ++;
+        //std::cout<<rec.rid.num<<" "<<rec.rid.slot<<" "<<rec.len<<std::endl;
+        rec = iter.NextRec();
+        //std::cout<<rec.rid.num<<" "<<rec.rid.slot<<" "<<rec.len<<std::endl;
     }
+    //std::cout<<"1231"<<std::endl;
     tHandle.CloseTbl();
 }

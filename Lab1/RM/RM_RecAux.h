@@ -20,6 +20,7 @@ typedef struct RM_RecAux {
     std::vector<std::pair<std::string, std::string> > strValue;
     std::vector<std::pair<std::string, double> > lfValue;
     std::vector<std::pair<std::string, int> > iValue;
+    std::vector<std::pair<std::string, bool> > bValue;
 
     std::pair<int, int> GetPosByKey(const std::string& key) const {
        for (int i = 0; i < strValue.size(); ++i) {
@@ -37,7 +38,19 @@ typedef struct RM_RecAux {
             return std::make_pair(2, i);
         }
        }
+       for (int i = 0; i < bValue.size(); ++i) {
+        if (bValue[i].first == key) {
+            return std::make_pair(3, i);
+        }
+       }
        return std::make_pair(NOT_EXIST, 0);
+    }
+
+    void Clear() {
+        strValue.clear();
+        lfValue.clear();
+        iValue.clear();
+        bValue.clear();
     }
 }RM_RecAux;
 

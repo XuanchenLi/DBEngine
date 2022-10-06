@@ -15,6 +15,7 @@ struct RM_Record {
     RM_RecPrefix prefix;
     char* addr;
     int len;
+    RM_Record(){addr = nullptr;}
     
     template <typename T>
     RC SetContent(T t) {
@@ -29,17 +30,22 @@ struct RM_Record {
     RC InitPrefix(const RM_TblMeta& meta) {
         if (addr == nullptr)
             return FAILURE;
-        if (prefix.posInfo != nullptr)
+        if (prefix.posInfo != nullptr) {
             delete[] prefix.posInfo;
+        }
         int pLen = meta.GetPrefixLen();
-        int num = (pLen - sizeof(bool) - sizeof(int)) / sizeof(PosInfo);
+        int num = meta.GetDynamicNum();
         prefix.posInfo = new PosInfo[num];
-        memcpy(&prefix, addr, pLen);
+        //std::cout<<meta.GetDynamicNum()<<std::endl;
+        memcpy(&prefix.used, addr, sizeof(bool));
+        memcpy(&prefix.dColNum, addr + sizeof(bool), sizeof(int));
+        memcpy(prefix.posInfo, addr + sizeof(bool) + sizeof(int), num * sizeof(PosInfo));
+        //memcpy(&prefix, addr, pLen);
         return SUCCESS;
     }
 
     //
-    RC SerializeData(const RM_TblMeta& meta, RM_RecAux& data) {
+    RC SerializeData(const RM_TblMeta& meta, const RM_RecAux& data) {
         if(addr != nullptr) {
             //!!需要防止addr此时指向缓冲区内部
             //避免指向缓冲区的对象和用于插入的对象的混用
@@ -57,14 +63,16 @@ struct RM_Record {
             int idx = 0;
             if ((idx = meta.GetIdxByName(data.strValue[i].first)) != NOT_EXIST) {
                 if (meta.isDynamic[idx]) {
-                    totLen += data.strValue[i].second.length();
+                    totLen += data.strValue[i].second.length() + 1;
                 }
             }else {
-                std::cout<<"COL NOT EXIST\n"<<std::endl;
+                std::cout<<"COL " << data.strValue[i].first <<" NOT EXIST\n"<<std::endl;
                 return FAILURE;
             }
         }
+        
         addr = new char[totLen];
+        len = totLen;
         bool tmpB = true;
         int tmpI = meta.GetDynamicNum();
         memcpy(addr, &tmpB, sizeof(bool));
@@ -74,10 +82,15 @@ struct RM_Record {
         int dCnt = 0;
         for (int i = 0; i < meta.colNum; ++i) {
             std::string tar = meta.GetNameByPos(i);
+            if (tar == "") {
+                std::cout<<"COL NOT EXIST\n"<<std::endl;
+                return FAILURE;
+            }
             std::pair<int, int> vPos = data.GetPosByKey(tar);
             if (vPos.first == NOT_EXIST) {
                 delete[] addr;
-                std::cout<<"COL NOT EXIST\n"<<std::endl;
+                //std::cout<< tar <<std::endl;
+                std::cout<<"COL " << tar <<" NOT EXIST\n"<<std::endl;
                 return FAILURE;
             }
             if (vPos.first == 0) {
@@ -92,16 +105,22 @@ struct RM_Record {
                     dCnt++;
                 }else {
                     strcpy(addr + sStart, data.strValue[vPos.second].second.c_str());
-                    sStart += strlen(data.strValue[vPos.second].second.c_str()) + 1;  //加上'\0'
+                    sStart += meta.length[i]; 
                 }
             }else if (vPos.first == 1) {
+                //std::cout<<data.lfValue[vPos.second].second<<std::endl;
                 memcpy(addr + sStart, &data.lfValue[vPos.second].second, sizeof(double));
+                //std::cout<<sStart - meta.GetPrefixLen()<<std::endl;
                 sStart += sizeof(double);
             }else if (vPos.first == 2) {
                 memcpy(addr + sStart, &data.iValue[vPos.second].second, sizeof(int));
                 sStart += sizeof(int);
+            }else if (vPos.first == 3) {
+                memcpy(addr + sStart, &data.bValue[vPos.second].second, sizeof(bool));
+                sStart += sizeof(bool);
             }
         }
+        
         return SUCCESS;
 
     }
@@ -165,6 +184,7 @@ struct RM_Record {
         int off = GetOffset(meta, num);
         if (meta.isDynamic[idx]) {
             PosInfo info = GetDynamicPosInfo(meta, num);
+            //std::cout<<info.end - info.start<<std::endl;
             memcpy(p, addr + info.start, info.end - info.start);  //end为下一个字段的开始
         }else {
             switch(meta.type[idx]) {
@@ -173,6 +193,7 @@ struct RM_Record {
                     break;
                 case DB_DOUBLE:
                     *(double*)p = *(double*)(addr + off);
+                    //std::cout<<off - meta.GetPrefixLen()<<std::endl;
                     break;
                 case DB_INT:
                     *(int*)p = *(int*)(addr + off);
