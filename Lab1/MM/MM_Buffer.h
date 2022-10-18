@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <list>
 #include "FM/FM_Bid.h"
+#include "MM_BufferStrategy.h"
 #include "utils/RC.h"
 
 
@@ -16,9 +17,10 @@ class MM_Buffer {
 
 public:
     enum Strategy{LRU = 1, CLOCK_SWEEP = 2};
+    //friend class MM_BufferStrategy;
 
     //MM_Buffer();
-    MM_Buffer(unsigned int, Strategy s = LRU);
+    MM_Buffer(unsigned int, MM_BufferStrategy* s, bool forFile=true);
     ~MM_Buffer();
     MM_Buffer(const MM_Buffer &)=delete;
     MM_Buffer& operator= (const MM_Buffer &)=delete;
@@ -37,11 +39,12 @@ public:
 
 private:
     int GetEmpty();
-    Strategy strategy;
+    MM_BufferStrategy* strategy;
     MM_BufferUnit* units;
     std::unordered_map<FM_Bid, int, Bid_Hash> hashTbl;
     std::list<int> victimList;
     std::list<int> freeList;
+    bool forFile;
 };
 
 #endif

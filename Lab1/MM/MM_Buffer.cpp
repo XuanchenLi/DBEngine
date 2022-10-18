@@ -11,8 +11,9 @@
 extern unsigned int BUFFER_SIZE;
 extern FM_Manager* fM_Manager;
 
-MM_Buffer::MM_Buffer(unsigned int s, Strategy str) {
-    this->strategy = str;
+MM_Buffer::MM_Buffer(unsigned int s, MM_BufferStrategy* stgy, bool forFile) {
+    this->strategy = stgy;
+    this->forFile = forFile;
     this->hashTbl.clear();
     this->victimList.clear();
     this->freeList.clear();
@@ -24,12 +25,13 @@ MM_Buffer::MM_Buffer(unsigned int s, Strategy str) {
 }
 
 MM_Buffer::~MM_Buffer() {
+    delete strategy;
     delete[] this->units;
 }
 RC MM_Buffer::Clear() {
     for (int i = 0; i < BUFFER_SIZE; ++i) {
         //std::cout<<i<<std::endl;
-        if (units[i].dirty) {
+        if (units[i].dirty && forFile) {
             FM_FileHandler* hdl = nullptr;
             if (fM_Manager->GetFileHandle(units[i].bid.fd, &hdl) == SUCCESS) {
                 //std::cout<<"1231"<<std::endl;
@@ -52,7 +54,7 @@ RC MM_Buffer::Clear(int fd) {
     for (int i = 0; i < BUFFER_SIZE; ++i) {
         //std::cout<<i<<std::endl;
         if (units[i].bid.fd == fd) {
-            if (units[i].dirty) {
+            if (units[i].dirty && forFile) {
                FM_FileHandler* hdl = nullptr;
                if (fM_Manager->GetFileHandle(units[i].bid.fd, &hdl) == SUCCESS) {
                    //std::cout<<"1231"<<std::endl;
@@ -80,6 +82,8 @@ RC MM_Buffer::Clear(int fd) {
 }
 
 RC MM_Buffer::ForcePage(FM_Bid bid) {
+    if (!forFile)
+        return SUCCESS;
     auto pr = hashTbl.find(bid);
     if (pr == hashTbl.end())
         return NOT_EXIST;
@@ -94,6 +98,8 @@ RC MM_Buffer::ForcePage(FM_Bid bid) {
 }
 
 RC MM_Buffer::ForcePage(int fd) {
+    if (!forFile)
+        return SUCCESS;
     for (auto p:hashTbl) {
         if (p.first.fd == fd) {
             int idx = p.second;
@@ -158,21 +164,23 @@ RC MM_Buffer::GetPage(FM_Bid bid, MM_PageHandler& hdl) {
         std::cout<<"!!!BUFFER USED OUT!!!"<<std::endl;
         return FAILURE;
     }
-    FM_FileHandler* fHdl = nullptr;
-    if (fM_Manager->GetFileHandle(bid.fd, &fHdl) != SUCCESS) {
-        return NOT_EXIST;
-    }
-    //std::cout<<fHdl<<std::endl;
+    if (forFile) {
+        FM_FileHandler* fHdl = nullptr;
+        if (fM_Manager->GetFileHandle(bid.fd, &fHdl) != SUCCESS) {
+            return NOT_EXIST;
+        }
+        //std::cout<<fHdl<<std::endl;
     
-    if (fHdl->GetBlock(bid.num, units[slot].content) != SUCCESS) {
-        return FAILURE;
+        if (fHdl->GetBlock(bid.num, units[slot].content) != SUCCESS) {
+            return FAILURE;
+        }
+        hdl.SetPage(&units[slot]);
     }
     
     units[slot].bid = bid;
     units[slot].dirty = false;
     hashTbl.insert(std::make_pair(bid, slot));
     //Pin(bid);
-    hdl.SetPage(&units[slot]);
     return SUCCESS;
 }
 int MM_Buffer::GetEmpty() {
@@ -182,25 +190,7 @@ int MM_Buffer::GetEmpty() {
         return res;
     }
     if (!victimList.empty()) {
-        int res = 0;
-        if (this->strategy == LRU) {
-            res = victimList.front();
-            victimList.pop_front();
-        }else if (this->strategy == CLOCK_SWEEP) {
-            auto it = this->victimList.begin();
-            while(true) {
-                if (this->units[*it].usedCount == 0) {
-                    res = *it;
-                    this->victimList.remove(*it);
-                    break;
-                } else {
-                   this->units[*it].usedCount--; 
-                   it++;
-                   if (it == this->victimList.end())
-                        it = this->victimList.begin();
-                }
-            }   
-        }
+        int res = strategy->GetVictim(this->victimList, this->units);
         ForcePage(units[res].bid);
         hashTbl.erase(units[res].bid);
         units[res].clear();

@@ -9,6 +9,7 @@
 #include "MM/MM_Buffer.h"
 #include "RM/RM_TblMeta.h"
 #include "RM/RM_TableHandler.h"
+#include "MM/MM_StrategyLRU.h"
 #include "RM/RM_Record.h"
 
 using namespace std;
@@ -56,7 +57,7 @@ void dbInit(int argc, char* argv[]) {
     BLOCK_SIZE = (unsigned int)atoi(argv[4]) << 10;
     BUFFER_SIZE = (unsigned int)atoi(argv[3]);
     PREALLOC_SIZE = (unsigned int)atoi(argv[2])<< 20;
-    gBuffer = new MM_Buffer(BUFFER_SIZE, MM_Buffer::CLOCK_SWEEP);
+    gBuffer = new MM_Buffer(BUFFER_SIZE, new MM_StrategyLRU());
     fM_Manager = new FM_Manager();
     fM_Manager->CreateDir("./DB");
     fM_Manager->CreateDir(DBT_DIR.c_str());
@@ -277,7 +278,7 @@ void task1() {
     char bN[5][30] = {"Downtown", "Perryridge", "Redwood", "Mianus", "Brighton"};
     double balance;
     RM_RecAux rAux;
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 10000; ++i) {
         rAux.Clear();
         rAux.strValue.push_back(
             std::make_pair<std::string, std::string>("account_number", "A-" + to_string(i))

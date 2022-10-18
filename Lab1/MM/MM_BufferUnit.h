@@ -28,6 +28,8 @@ public:
     bool IsDirty() {return dirty;}
     FM_Bid GetBid() {return bid;}
     char* GetPtr() {return content;}
+    int GetUsedCnt()const {return usedCount;}
+    int SetUsedCnt(int cnt) {usedCount = cnt;}
 
 
 private:
