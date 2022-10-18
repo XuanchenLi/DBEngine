@@ -42,6 +42,7 @@ public:
         posInfo = new PosInfo[oth.dColNum];
         if (oth.posInfo != nullptr)
             memcpy(posInfo, oth.posInfo, sizeof(PosInfo)*dColNum);
+        return *this;
     }
     int size() {
         return sizeof(bool) + dColNum*sizeof(posInfo) + sizeof(int);

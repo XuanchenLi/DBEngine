@@ -300,4 +300,5 @@ RC RM_TableHandler::InitTblMeta() {
     }
     //std::cout<<"1231"<<std::endl;
     tHandle.CloseTbl();
+    return SUCCESS;
 }

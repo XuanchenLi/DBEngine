@@ -80,5 +80,6 @@ RC RM_TblIterator::SetTbl(const char* tblPath) {
 RC RM_TblIterator::SetLimits(const std::vector<DB_Opt>& lim) {
     this->limits = lim;
     Reset();
+    return SUCCESS;
 }
 

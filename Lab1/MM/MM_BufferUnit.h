@@ -29,7 +29,7 @@ public:
     FM_Bid GetBid() {return bid;}
     char* GetPtr() {return content;}
     int GetUsedCnt()const {return usedCount;}
-    int SetUsedCnt(int cnt) {usedCount = cnt;}
+    void SetUsedCnt(int cnt) {usedCount = cnt;}
 
 
 private:
