@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
     }
     dbInit(argc, argv);
     //----------------------------------
-    //task1();
+    task1();
     task3();
     //----------------------------------
     dbClear();
