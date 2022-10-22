@@ -7,6 +7,7 @@
 #include "utils/RC.h"
 #include "RM_TblMeta.h"
 #include "RM_RecAux.h"
+#include "utils/DB_Option.h"
 #include "RM_RecPrefix.h"
 
 struct RM_Record {

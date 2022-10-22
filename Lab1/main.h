@@ -20,6 +20,7 @@ extern std::string DBT_DIR;
 extern std::string WORK_DIR;
 extern const char TBL_DIC_NAME[];
 extern const char COL_DIC_NAME[];
+extern const char IDX_DIC_NAME[];
 extern RM_TblMeta TBL_DIC_META;
 extern RM_TblMeta COL_DIC_META;
 extern const char DIC_DB_NAME[];

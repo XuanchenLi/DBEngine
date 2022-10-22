@@ -65,7 +65,13 @@ RC MM_PageHandler::SetHeader(const MM_PageHdr& nHdr) {
     return SUCCESS;
 }
 
-char* MM_PageHandler::GetPtr(int off) {
+char* MM_PageHandler::GetPtr(int off){
+    if (buf == nullptr)
+        return nullptr;
+    return buf->GetPtr() + off;
+}
+
+const char* MM_PageHandler::GetPtr(int off) const{
     if (buf == nullptr)
         return nullptr;
     return buf->GetPtr() + off;

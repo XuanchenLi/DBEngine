@@ -33,6 +33,7 @@ public:
     RC ForcePage(FM_Bid);
     RC ForcePage(int fd);
     RC SetDirty(FM_Bid);
+
     
 
     int size() {return hashTbl.size();}

@@ -6,6 +6,7 @@
 #include "FM/FM_Manager.h"
 #include "RM/RM_TblIterator.h"
 #include "main.h"
+#include "IM/IM_Manager.h"
 #include "MM/MM_Buffer.h"
 #include "RM/RM_TblMeta.h"
 #include "RM/RM_TableHandler.h"
@@ -24,12 +25,14 @@ std::string WORK_DIR = "./DB/";
 const char DIC_DB_NAME[] = "db_schema";
 const char TBL_DIC_NAME[] = "tables"; 
 const char COL_DIC_NAME[] = "columns"; 
+const char IDX_DIC_NAME[] = "indexes";
 RM_TblMeta TBL_DIC_META;
 RM_TblMeta COL_DIC_META;
 
 void dbClear();
 void dbInit(int argc, char* argv[]);
 void task1();
+void task3();
 
 
 int main(int argc, char* argv[]) {
@@ -40,6 +43,7 @@ int main(int argc, char* argv[]) {
     dbInit(argc, argv);
     //----------------------------------
     //task1();
+    task3();
     //----------------------------------
     dbClear();
 
@@ -64,9 +68,9 @@ void dbInit(int argc, char* argv[]) {
     fM_Manager->CreateDir((WORK_DIR + argv[1]).c_str());
 
     //--------创建数据字典------------
-    int status = fM_Manager->CreateTblFile((DBT_DIR + "tables").c_str());
-    fM_Manager->CreateTblFile((DBT_DIR + "columns").c_str());
-    //std::cout<<status<<std::endl;
+    int status = fM_Manager->CreateTblFile((DBT_DIR + TBL_DIC_NAME).c_str());
+    fM_Manager->CreateTblFile((DBT_DIR + COL_DIC_NAME).c_str());
+    fM_Manager->CreateTblFile((DBT_DIR + IDX_DIC_NAME).c_str());
 
     //--------创建表文件--------------
     WORK_DIR += argv[1];
@@ -176,7 +180,24 @@ void dbInit(int argc, char* argv[]) {
     );
     tblHandler.InsertRec(rAux);
     rAux.Clear();
+    //
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("dbName", "db_schema")
+    );
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("tblName", "indexes")
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("colNum", 3)
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("rowNum", 0)
+    );
+    tblHandler.InsertRec(rAux);
+    rAux.Clear();
+
     tblHandler.CloseTbl();
+
     
     //-------------------------------插入用户表字段描述--------------------------------------
     //RM_TableHandler tblHandler2((DBT_DIR + COL_DIC_NAME).c_str());
@@ -262,12 +283,97 @@ void dbInit(int argc, char* argv[]) {
     );
     tblHandler.InsertRec(rAux);
     rAux.Clear();
+
+
+    //-------------------------------插入索引系统表字段描述--------------------------------------
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("dbName", "db_schema")
+    );
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("tblName", "indexes")
+    );
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("colName", "dbName")
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("dataType", DB_STRING)
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("length", 64)
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("colPos", 0)
+    );
+    rAux.bValue.push_back(
+        std::make_pair<std::string, bool>("isPrimary", true)
+    );
+    rAux.bValue.push_back(
+        std::make_pair<std::string, bool>("isDynamic", true)
+    );
+    tblHandler.InsertRec(rAux);
+    rAux.Clear();
+    //
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("dbName", "db_schema")
+    );
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("tblName", "indexes")
+    );
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("colName", "tblName")
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("dataType", DB_STRING)
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("length", 64)
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("colPos", 1)
+    );
+    rAux.bValue.push_back(
+        std::make_pair<std::string, bool>("isPrimary", true)
+    );
+    rAux.bValue.push_back(
+        std::make_pair<std::string, bool>("isDynamic", true)
+    );
+    tblHandler.InsertRec(rAux);
+    rAux.Clear();
+    //
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("dbName", "db_schema")
+    );
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("tblName", "indexes")
+    );
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("colName", "colPos")
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("dataType", DB_INT)
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("length", 0)
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("colPos", 2)
+    );
+    rAux.bValue.push_back(
+        std::make_pair<std::string, bool>("isPrimary", true)
+    );
+    rAux.bValue.push_back(
+        std::make_pair<std::string, bool>("isDynamic", false)
+    );
+    tblHandler.InsertRec(rAux);
+    rAux.Clear();
+
     //h2.CloseTbl();
     tblHandler.CloseTbl();
     
 }
 
 void task1() {
+
     //--------插入记录----------------
     //std::cout<<WORK_DIR<<std::endl;
     RM_TableHandler tblHandler((WORK_DIR + "account").c_str());
@@ -317,3 +423,10 @@ void task1() {
     
     tblHandler.CloseTbl();
 }
+
+void task3() {
+    IM_Manager iManager;
+    iManager.CreateIndex((WORK_DIR + "account").c_str(), 0);
+
+}
+
