@@ -20,22 +20,27 @@ public:
     BTreeNode(const BTreeNode& oth);
     ~BTreeNode(); 
 
-    RC SetData(const MM_PageHandler& pHdl);
+    RC SetData(const MM_PageHandler & pHdl);
     RC InitHead();
     RC SetPage(MM_PageHandler& pHdl);
     RC InsertPair(void* key, const RM_Rid& ptr);
+    RC DeleteSinglePair(void* key, const RM_Rid& ptr);
+    RC DeletePair(void* key, const RM_Rid& ptr);
     RC EraseNPair(int n);
     RC Remove(const void* key);
     RM_Rid GetSon(void* pData);
+    RM_Rid GetFirstSon(void* pData);
     int GetMaxPNum()const {return pHdr.slotCnt;}
     int GetKeyNum() const {return keys.size();}
     int GetBlkNum() const {return bid.num;}
-    bool isRoot() const {return pHdr.preFreePage == -1;}
+    bool isRoot() const {return pHdr.preFreePage == 0;}
     int GetParent() const {return pHdr.preFreePage;}
+    bool Contain(void* key, const RM_Rid& ptr);
 
 private:
     bool Less(const void*, const void*) const;
     bool Greater(const void*, const void*) const;
+    bool Equal(const void*, const void*) const;
     int GetStartOff() const;
 
     dbType attrType;
