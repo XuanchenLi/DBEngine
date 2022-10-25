@@ -90,7 +90,7 @@ IM_IdxHandler::IM_IdxHandler(const char* idxPath) {
 RC IM_IdxHandler::FindInsertPos(void* pData, BTreeNode& L) {
     FM_FileHdr fHdr = fHandler->GetFileHdr();
     MM_PageHandler pHdl;
-    gBuffer->GetPage(FM_Bid(fHandler->GetFd(), 1), pHdl);
+    gBuffer->GetPage(FM_Bid(fHandler->GetFd(), fHdr.preF), pHdl);
     L.SetData(pHdl);
     RM_Rid nex = L.GetSon(pData);
     while (nex.num != -1) {
@@ -98,35 +98,70 @@ RC IM_IdxHandler::FindInsertPos(void* pData, BTreeNode& L) {
         L.SetData(pHdl);
         nex = L.GetSon(pData);
     }
+    //std::cout<<"ggg"<<std::endl;
     return SUCCESS;
 }
+
+RC IM_IdxHandler::FindLeaf(void* pData, const RM_Rid &rid, BTreeNode& L) {
+    FM_FileHdr fHdr = fHandler->GetFileHdr();
+    MM_PageHandler pHdl;
+    gBuffer->GetPage(FM_Bid(fHandler->GetFd(), fHdr.preF), pHdl);
+    L.SetData(pHdl);
+    RM_Rid nex = L.GetFirstSon(pData);
+    while (nex.num != -1) {
+        gBuffer->GetPage(FM_Bid(fHandler->GetFd(), nex.num), pHdl);
+        L.SetData(pHdl);
+        nex = L.GetFirstSon(pData);
+    }
+
+    while(true) {
+        if (L.Contain(pData, rid)) return SUCCESS;
+        if (L.Ptrs.size()%2 == 0) break;
+        gBuffer->GetPage(FM_Bid(fHandler->GetFd(), L.Ptrs.back().num), pHdl);
+        L.SetData(pHdl);
+    }
+    //std::cout<<"ggg"<<std::endl;
+    return NOT_EXIST;
+}
+
+
 
 RC IM_IdxHandler::InsertEntry(void *pData, const RM_Rid &rid) {
     FM_FileHdr fHdr = fHandler->GetFileHdr();
     BTreeNode L(attrType, attrLen);
+    //std::cout<<fHdr.blkCnt<<std::endl;
     if (fHdr.blkCnt == 1) {  //树为空
         //创建空叶节点
+        //std::cout<<"123"<<std::endl;
         MM_PageHandler pHdl;
-        int num = fHandler->GetNextFree();
+        int num = fHandler->GetNextWhole();
+        fHdr.preF = num;
+        fHandler->SetFileHdr(fHdr);
+        fHandler->SetChanged(true);
         gBuffer->GetPage(FM_Bid(fHandler->GetFd(), num), pHdl);
         L.SetData(pHdl);
+
     }
     else {
         //找到应该包含pData的叶节点
+        //std::cout<<"112"<<std::endl;
         FindInsertPos(pData, L);
     }
     if (L.GetKeyNum() < L.GetMaxPNum() - 1) {
+        //std::cout<<L.GetKeyNum()<< " "<< L.GetMaxPNum()<< std::endl;
         L.InsertPair(pData, rid);
         MM_PageHandler pHdl;
         gBuffer->GetPage(FM_Bid(fHandler->GetFd(), L.GetBlkNum()), pHdl);
         return L.SetPage(pHdl);
     }
     else {
+        //std::cout<<"dsd"<< std::endl;
         //分裂
         //创建新节点
         BTreeNode L2(attrType, attrLen);
         MM_PageHandler pHdl;
-        int num = fHandler->GetNextFree();
+        int num = fHandler->GetNextWhole();
+        //std::cout<<num<< std::endl;
         gBuffer->GetPage(FM_Bid(fHandler->GetFd(), num), pHdl);
         L2.SetData(pHdl);
         //
@@ -171,7 +206,7 @@ RC IM_IdxHandler::InsertEntry(void *pData, const RM_Rid &rid) {
         L.SetPage(pHdl);
         gBuffer->GetPage(FM_Bid(fHandler->GetFd(), L2.GetBlkNum()), pHdl);
         L2.SetPage(pHdl);
-
+        //std::cout<<L.bid.num<<L2.bid.num<< std::endl;
         return InsertInParent(L, k2, L2);
     }
     return SUCCESS;
@@ -181,9 +216,10 @@ RC IM_IdxHandler::InsertEntry(void *pData, const RM_Rid &rid) {
 RC IM_IdxHandler::InsertInParent(BTreeNode&N1, void*key, BTreeNode& N2) {
     if (N1.isRoot()) {
         //创建新根节点
+        //std::cout<<"123"<<std::endl;
         BTreeNode R(attrType, attrLen);
         MM_PageHandler pHdl;
-        int num = fHandler->GetNextFree();
+        int num = fHandler->GetNextWhole();
         gBuffer->GetPage(FM_Bid(fHandler->GetFd(), num), pHdl);
         R.SetData(pHdl);
         R.keys.push_back(key);
@@ -204,13 +240,17 @@ RC IM_IdxHandler::InsertInParent(BTreeNode&N1, void*key, BTreeNode& N2) {
     BTreeNode P(attrType, attrLen);
     MM_PageHandler pHdl;
     int num = N1.pHdr.preFreePage;
+    //std::cout<<N1.bid.num<<" "<<num<<std::endl;
     gBuffer->GetPage(FM_Bid(fHandler->GetFd(), num), pHdl);
     P.SetData(pHdl);
     if (P.keys.size() < P.GetMaxPNum()) {
         //父节点有空位
+        //std::cout<<"111"<<std::endl;
         auto iter = P.Ptrs.begin();
         auto iter2 = P.keys.begin();
         while((*iter).num != N1.bid.num) iter++, iter2++;
+        //std::cout<<"222"<<std::endl;
+        iter++, iter2++;
         P.Ptrs.insert(iter, RM_Rid(N2.bid.num, 0));
         P.keys.insert(iter2, key);
         P.pHdr.firstHole++;
@@ -220,10 +260,13 @@ RC IM_IdxHandler::InsertInParent(BTreeNode&N1, void*key, BTreeNode& N2) {
         return N2.SetPage(pHdl);
     }else {
         //分裂
+        //std::cout<<"1232"<<std::endl;
         BTreeNode T(P);
         auto iter = T.Ptrs.begin();
         auto iter2 = T.keys.begin();
-        while((*iter).num != T.bid.num) iter++, iter2++;
+        
+        while((*iter).num != N1.bid.num) iter++, iter2++;
+        iter++, iter2++;
         T.Ptrs.insert(iter, RM_Rid(N2.bid.num, 0));
         T.keys.insert(iter2, key);
         T.pHdr.firstHole++;
@@ -233,7 +276,7 @@ RC IM_IdxHandler::InsertInParent(BTreeNode&N1, void*key, BTreeNode& N2) {
         
         BTreeNode P2(attrType, attrLen);
         MM_PageHandler pHdl;
-        int num = fHandler->GetNextFree();
+        int num = fHandler->GetNextWhole();
         gBuffer->GetPage(FM_Bid(fHandler->GetFd(), num), pHdl);
         P2.SetData(pHdl);
 
@@ -264,4 +307,23 @@ RC IM_IdxHandler::InsertInParent(BTreeNode&N1, void*key, BTreeNode& N2) {
         return InsertInParent(P, kn, P2);
     }
 
+}
+RC IM_IdxHandler::DeleteEntry(void *pData, const RM_Rid &rid) {
+    BTreeNode N(attrType, attrLen);
+    FindLeaf(pData, rid, N);
+    return DeleteEntry(N, pData, rid);
+}
+
+RC IM_IdxHandler::DeleteEntry(BTreeNode& N, void *pData, const RM_Rid &rid) {
+    FM_FileHdr fHdr = fHandler->GetFileHdr();
+    //TODO 当前只考虑了非重复键
+    N.DeleteSinglePair(pData, rid);
+    if (N.isRoot() && N.Ptrs.size() == 1) {
+        fHdr.preF = (*N.Ptrs.begin()).num;
+        fHandler->SetChanged(true);
+        fHandler->SetFileHdr(fHdr);
+        fHandler->ReturnWhole(N.bid.num);
+        return SUCCESS;
+
+    }
 }

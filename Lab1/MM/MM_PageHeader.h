@@ -12,7 +12,7 @@ struct MM_PageHeader {
     int freeOff;
     int freeBtsCnt;
     int firstHole;     //用于索引时表示当前已有键数
-    int preFreePage;    //用于索引时表示父节点
+    int preFreePage;    //用于索引时表示父节点，0表示根
     int nextFreePage;   //用于索引时-1表示叶节点 1表示非叶节点
 };
 

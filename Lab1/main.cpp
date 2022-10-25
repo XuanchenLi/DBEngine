@@ -40,9 +40,10 @@ int main(int argc, char* argv[]) {
         cout<<"usage:./main [DBname] [preallocate size](MB) [buffer block number] [buffer block size](KB)"<<endl;
         exit(0);
     }
+    fM_Manager->DeleteDir("./DB");
     dbInit(argc, argv);
     //----------------------------------
-    task1();
+    task1(); 
     task3();
     //----------------------------------
     dbClear();

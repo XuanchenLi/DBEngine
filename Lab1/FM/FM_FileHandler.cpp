@@ -86,7 +86,7 @@ int FM_FileHandler::GetNextFree(int len) {
     int nextFree = fHdr.firstFreeHole;
     int off = BLOCK_SIZE * nextFree;
     MM_PageHdr tpHdr;
-    while (nextFree > 0) {
+        while (nextFree > 0) {
         lseek(this->fd, off, SEEK_SET);
         read(this->fd, &tpHdr, sizeof(MM_PageHdr));
         if (tpHdr.freeOff - tpHdr.slotCnt*sizeof(RM_RecHdr) >= len + sizeof(RM_RecHdr))
@@ -125,4 +125,53 @@ int FM_FileHandler::GetNextFree(int len) {
     this->fHdr.blkCnt ++;
     this->changed = true;
     return newBlk;
+}
+
+int FM_FileHandler::GetNextWhole() {
+    if (!this->isOpen)
+        return INVALID_OPTR;
+    if (fHdr.firstFreeHole > 0) {
+        //std::cout<<fHdr.firstFreeHole<<std::endl;
+        int res = fHdr.firstFreeHole;
+        lseek(this->fd, BLOCK_SIZE * res, SEEK_SET);
+        MM_PageHdr tpHdr;
+        read(this->fd, &tpHdr, sizeof(MM_PageHdr));
+        fHdr.firstFreeHole = tpHdr.nextFreePage;
+        this->changed = true;
+        return res;
+    }
+    MM_PageHdr newPHdr;
+    //std::cout<<newPHdr.freeOff<<std::endl;
+    //newPHdr.nextFreePage = this->fHdr.firstFreeHole;
+    newPHdr.preFreePage = 0;
+    newPHdr.freeBtsCnt = BLOCK_SIZE - sizeof(MM_PageHdr);
+    //std::cout<<this->fHdr.blkCnt<<" "<<newPHdr.freeBtsCnt<<std::endl;
+    //this->fHdr.firstFreeHole = this->fHdr.blkCnt;
+    int newBlk = this->fHdr.blkCnt;
+    this->changed = true;
+    lseek(this->fd, BLOCK_SIZE * newBlk, SEEK_SET);
+    //std::cout<<newPHdr.freeBtsCnt<<std::endl;
+    int res = write(this->fd, &newPHdr, sizeof(MM_PageHdr));
+
+    if (res != sizeof(MM_PageHdr))
+        return IO_ERROR;
+    this->fHdr.blkCnt ++;
+    this->changed = true;
+    return newBlk;
+}
+
+
+RC FM_FileHandler::ReturnWhole(int num) {
+    lseek(this->fd, BLOCK_SIZE * num, SEEK_SET);
+    MM_PageHdr tpHdr;
+    read(this->fd, &tpHdr, sizeof(MM_PageHdr));
+    tpHdr.nextFreePage = fHdr.firstFreeHole;
+    lseek(this->fd, BLOCK_SIZE * num, SEEK_SET);
+    //std::cout<<newPHdr.freeBtsCnt<<std::endl;
+    int res = write(this->fd, &tpHdr, sizeof(MM_PageHdr));
+    if (res != sizeof(MM_PageHdr))
+        return IO_ERROR;
+    fHdr.firstFreeHole = num;
+    this->changed = true;
+    return SUCCESS;
 }

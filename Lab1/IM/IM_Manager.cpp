@@ -79,6 +79,7 @@ RC IM_Manager::CreateIndex(const char* tblPath, int colPos) {
     tblHdl.GetIter(iter);
     RM_Record rec;
     rec = iter.NextRec();
+    
     while(rec.rid.num != -1) {
         void* tp = nullptr;
         switch(iHdl.GetType()) {
@@ -96,9 +97,11 @@ RC IM_Manager::CreateIndex(const char* tblPath, int colPos) {
                 break;
         }
         rec.GetColData(tblHdl.GetMeta(), colPos, tp);
+        //printf("%s\n", tp);
         iHdl.InsertEntry(tp, rec.rid);
         rec = iter.NextRec();
     }
+    
     tblHdl.CloseTbl();
 
     return SUCCESS;

@@ -45,6 +45,8 @@ public:
 
 private:
     RC FindInsertPos(void* pData, BTreeNode& L);
+    RC DeleteEntry(BTreeNode& L, void *pData, const RM_Rid &rid);  
+    RC FindLeaf(void* pData, const RM_Rid &rid, BTreeNode& L);
     RC InsertInParent(BTreeNode&N1, void*key, BTreeNode& N2);
 
     bool isChanged;
