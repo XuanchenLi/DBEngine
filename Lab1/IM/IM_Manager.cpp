@@ -83,29 +83,76 @@ RC IM_Manager::CreateIndex(const char* tblPath, int colPos) {
     while(rec.rid.num != -1) {
         void* tp = nullptr;
         switch(iHdl.GetType()) {
-            case DB_INT:
-                tp = new int;
-                break;
-            case DB_DOUBLE:
-                tp = new double;
-                break;
-            case DB_STRING:
-                tp = new char[iHdl.GetLen()];
-                break;
-            case DB_BOOL:
-                tp = new bool;
-                break;
+        case DB_INT:
+            tp = new int;
+            break;
+        case DB_DOUBLE:
+            tp = new double;
+            break;
+        case DB_STRING:
+            tp = new char[iHdl.GetLen()];
+            break;
+        case DB_BOOL:
+            tp = new bool;
+            break;
         }
         rec.GetColData(tblHdl.GetMeta(), colPos, tp);
         //printf("%s\n", tp);
         iHdl.InsertEntry(tp, rec.rid);
+
         rec = iter.NextRec();
     }
     
     tblHdl.CloseTbl();
+    iHdl.CloseIdx();
 
     return SUCCESS;
 
+}
+RC IM_Manager::ClearIndex(const char* tblPath, int colPos) {
+    int rc = FindIndex(tblPath, colPos);
+    if (rc == -1) {
+        std::cout<<"Index on col "<<colPos<<" is not exist.\n";
+        return SUCCESS;
+    }
+    auto name = GetDbTblName(tblPath);
+
+    //插入数据字典项
+    RM_TableHandler tblHdl;
+    IM_IdxHandler iHdl((tblPath + ("_" + std::to_string(colPos))).c_str());
+    RM_TblIterator iter;
+    tblHdl.OpenTbl(tblPath);
+    tblHdl.GetIter(iter);
+    RM_Record rec;
+    rec = iter.NextRec();
+
+    void* tp = nullptr;
+    switch(iHdl.GetType()) {
+        case DB_INT:
+            tp = new int;
+            break;
+        case DB_DOUBLE:
+            tp = new double;
+            break;
+        case DB_STRING:
+            tp = new char[iHdl.GetLen()];
+            break;
+        case DB_BOOL:
+            tp = new bool;
+            break;
+    }
+    
+    while(rec.rid.num != -1) {
+        
+        rec.GetColData(tblHdl.GetMeta(), colPos, tp);
+        //printf("%s\n", tp);
+        iHdl.DeleteEntry(tp, rec.rid);
+        rec = iter.NextRec();
+    }
+    
+    tblHdl.CloseTbl();
+    iHdl.CloseIdx();
+    return SUCCESS;
 }
 
 
@@ -121,7 +168,7 @@ RC IM_Manager::DestroyIndex(const char* tblPath, int colPos) {
         return st;
 
 
-    //TODO 删除索引项
+    //TODO 删除数据字典索引项
 
 
     return SUCCESS;
