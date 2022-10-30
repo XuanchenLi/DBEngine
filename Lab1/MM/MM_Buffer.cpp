@@ -172,6 +172,7 @@ RC MM_Buffer::GetPage(FM_Bid bid, MM_PageHandler& hdl) {
         //std::cout<<fHdl<<std::endl;
     
         if (fHdl->GetBlock(bid.num, units[slot].content) != SUCCESS) {
+            //std::cout<<"22223"<<std::endl;
             return FAILURE;
         }
         hdl.SetPage(&units[slot]);

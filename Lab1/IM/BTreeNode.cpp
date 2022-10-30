@@ -122,8 +122,16 @@ RC BTreeNode::InitHead() {
 int BTreeNode::GetStartOff() const {
     return sizeof(MM_PageHdr) + pHdr.slotCnt * sizeof(RM_RecHdr);
 }
+RC BTreeNode::Clear() {
+    EraseNPair(keys.size());
+    Ptrs.clear();
+    pHdr = MM_PageHdr();
+}
 RC BTreeNode::SetData(const MM_PageHandler& pHdl) {
+    //std::cout<<"22223"<<std::endl;
+    Clear();
     bid = pHdl.GetBid();
+    //std::cout<<"22223"<<std::endl;
     pHdr = pHdl.GetHeader();
     if (pHdr.firstHole == -1) {
         InitHead();
@@ -132,13 +140,18 @@ RC BTreeNode::SetData(const MM_PageHandler& pHdl) {
     }
     if (pHdr.firstHole == 0)
         return SUCCESS;
+    //std::cout<<"11223"<<std::endl;
     auto ptr = pHdl.GetPtr(GetStartOff());
     RM_Rid rid;
+    //std::cout<<"22223"<<std::endl;
+
     memcpy(&rid, ptr, sizeof(RM_Rid));
     Ptrs.push_back(rid);
     ptr += sizeof(RM_Rid);
     void* tp;
-    for (int i = 0; i < pHdr.firstHole; ++i) {
+    int pCnt = 1;
+    //std::cout<<"22223"<<std::endl;
+    for (int i = 0; i < pHdr.firstHole; ++i, pCnt++) {
         switch(attrType) {
             case DB_INT:
                 tp = new int;
@@ -162,9 +175,11 @@ RC BTreeNode::SetData(const MM_PageHandler& pHdl) {
                 break;
         }
         ptr += attrLen;
-        memcpy(&rid, ptr, sizeof(RM_Rid));
-        Ptrs.push_back(rid);
-        ptr += sizeof(RM_Rid);
+        if (pCnt < pHdr.freeBtsCnt) {
+            memcpy(&rid, ptr, sizeof(RM_Rid));
+            Ptrs.push_back(rid);
+            ptr += sizeof(RM_Rid);
+        }
     }
     return SUCCESS;
 }
@@ -185,6 +200,8 @@ RC BTreeNode::SetPage(MM_PageHandler& pHdl) {
     //std::cout<<pHdr.preFreePage<<std::endl;
     if (pHdl.GetPtr(0) == nullptr)
         return INVALID_OPTR;
+    pHdr.firstHole = keys.size();
+    pHdr.freeBtsCnt = Ptrs.size();
     pHdl.SetHeader(pHdr);
     if (isChanged) {
         isChanged = false;
@@ -211,8 +228,11 @@ RC BTreeNode::SetPage(MM_PageHandler& pHdl) {
 
         memcpy(ptr2, *ip, attrLen);
         ptr2 += attrLen;
-        memcpy(ptr2, &(*jp), sizeof(RM_Rid));
-        ptr2 += sizeof(RM_Rid);
+        if (jp != Ptrs.end()) {
+            memcpy(ptr2, &(*jp), sizeof(RM_Rid));
+            ptr2 += sizeof(RM_Rid);
+        }
+        ip++, jp++;
     }
     return SUCCESS;
 
@@ -230,7 +250,8 @@ RM_Rid BTreeNode::GetSon(void* pData) {
             return res;
         }
     }
-    return res;
+    //std::cout<<"jj"<<Ptrs.back().num<<std::endl;
+    return Ptrs.back();
 }
 
 RM_Rid BTreeNode::GetFirstSon(void* pData) {
@@ -240,6 +261,7 @@ RM_Rid BTreeNode::GetFirstSon(void* pData) {
         return res;
     auto j = Ptrs.begin();
     for (auto i = keys.begin(); i != keys.end(); ++i, j++) {
+        //printf("%s %s\n", *i, pData);
         if (Greater(*i, pData)) {
             res = *j;
             return res;
@@ -248,7 +270,8 @@ RM_Rid BTreeNode::GetFirstSon(void* pData) {
             return *j;
         }   
     }
-    return res;
+
+    return Ptrs.back();
 }
 
 bool BTreeNode::Less(const void*p1, const void*p2) const{
@@ -344,6 +367,7 @@ bool BTreeNode::Equal(const void*p1, const void*p2) const{
 
 RC BTreeNode::InsertPair(void* key, const RM_Rid& ptr) {
     pHdr.firstHole ++;
+    pHdr.freeBtsCnt ++;
     isChanged = true;
     if (keys.empty() || Less(key, keys.front())) {
         keys.push_front(key);
@@ -353,13 +377,16 @@ RC BTreeNode::InsertPair(void* key, const RM_Rid& ptr) {
         auto pp = Ptrs.begin();
         for (auto iter = keys.begin(); iter!=keys.end(); ++iter, ++pp) {
             if (Greater(*iter, key)) {
+                //std::cout<<"123"<<std::endl;
                 keys.insert(iter, key);
                 Ptrs.insert(pp, ptr);
                 return SUCCESS;
             }
         }
+        //std::cout<<"123"<<std::endl;
         keys.push_back(key);
         Ptrs.push_back(ptr);
+        
         return SUCCESS;
     }
     return SUCCESS;
@@ -378,7 +405,10 @@ RC BTreeNode::DeletePair(void* key, const RM_Rid& ptr) {
 }
 
 RC BTreeNode::DeleteSinglePair(void* key, const RM_Rid& ptr) {
-    if (this->keys.empty()) return NOT_EXIST;
+    if (this->keys.empty()) {
+        std::cout<<"key not exist"<<std::endl;
+        return NOT_EXIST;
+    }
     auto iter1 = keys.begin();
     auto iter2 = Ptrs.begin();
     while (iter1 != keys.end() && !Equal((*iter1), key)) iter1++;
@@ -423,3 +453,59 @@ RC BTreeNode::EraseNPair(int n) {
     isChanged = true;
     return SUCCESS;
 }
+
+
+std::pair<void*, RM_Rid> BTreeNode::GetLeftBro(const RM_Rid& ptr) {
+    if (Ptrs.size() <= 1 || keys.empty()) {
+        return std::make_pair(nullptr, RM_Rid());
+    }
+    if ((*Ptrs.begin()) == ptr) {
+        return std::make_pair(nullptr, RM_Rid());
+    }
+
+    auto iterP = Ptrs.begin();
+    auto iterPP = iterP; iterPP++;
+    auto iterK = keys.begin();
+    while (iterPP != Ptrs.end()) {
+        if ((*iterPP) == ptr) {
+            return std::make_pair(*iterK, *iterP);
+        }else {
+            iterP++, iterPP++, iterK++;
+        }
+    }
+    return std::make_pair(nullptr, RM_Rid());
+
+}
+std::pair<void*, RM_Rid> BTreeNode::GetRightBro(const RM_Rid& ptr) {
+    if (Ptrs.size() <= 1 || keys.empty()) {
+        return std::make_pair(nullptr, RM_Rid());
+    }
+    if (Ptrs.back() == ptr) {
+        return std::make_pair(nullptr, RM_Rid());
+    }
+
+    auto iterP = Ptrs.rbegin();
+    auto iterPP = iterP; iterPP++;
+    auto iterK = keys.rbegin();
+    while (iterPP != Ptrs.rend()) {
+        if ((*iterPP) == ptr) {
+            return std::make_pair(*iterK, *iterP);
+        }else {
+            iterP++, iterPP++, iterK++;
+        }
+    }
+    return std::make_pair(nullptr, RM_Rid());
+}
+
+ RC BTreeNode::ReplaceKey(void* src, void*tar) {
+    if (src == nullptr || tar == nullptr)
+        return INVALID_OPTR;
+    for (auto i = keys.begin(); i != keys.end(); ++i) {
+        if (src == *i) {
+            src = tar;
+            return SUCCESS;
+        }
+    }
+    return NOT_EXIST;
+ }
+

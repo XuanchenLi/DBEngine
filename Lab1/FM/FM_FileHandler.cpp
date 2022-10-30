@@ -10,10 +10,15 @@
 extern unsigned int BLOCK_SIZE;
 
 RC FM_FileHandler::GetBlock(int bNum, char* buf) {
-    if (!isOpen)
+    if (!isOpen) {
+        std::cout<<"File Not Open"<<std::endl;
         return INVALID_OPTR;
-    if (bNum + 1 > this->fHdr.blkCnt)
+    }
+    if (bNum + 1 > this->fHdr.blkCnt) {
+        //std::cout<<bNum<< " " << this->fHdr.blkCnt<<std::endl;
+        std::cout<<"Block Out Of File Range"<<std::endl;
         return OUT_OF_RANGE_ERROR;
+    }
     lseek(this->fd, bNum * BLOCK_SIZE, SEEK_SET);
     int res = read(this->fd, buf, BLOCK_SIZE);
     if (res != BLOCK_SIZE) {
@@ -131,6 +136,7 @@ int FM_FileHandler::GetNextWhole() {
     if (!this->isOpen)
         return INVALID_OPTR;
     if (fHdr.firstFreeHole > 0) {
+        //std::cout<<"123124214"<<std::endl;
         //std::cout<<fHdr.firstFreeHole<<std::endl;
         int res = fHdr.firstFreeHole;
         lseek(this->fd, BLOCK_SIZE * res, SEEK_SET);
@@ -156,6 +162,7 @@ int FM_FileHandler::GetNextWhole() {
     if (res != sizeof(MM_PageHdr))
         return IO_ERROR;
     this->fHdr.blkCnt ++;
+    //std::cout<<fHdr.blkCnt<<std::endl;
     this->changed = true;
     return newBlk;
 }

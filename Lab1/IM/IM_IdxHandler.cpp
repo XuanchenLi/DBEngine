@@ -12,23 +12,27 @@
 #include <math.h>
 #include <string>
 
-extern MM_Buffer* gBuffer;
-extern FM_Manager* fM_Manager;
+extern MM_Buffer *gBuffer;
+extern FM_Manager *fM_Manager;
 
-IM_IdxHandler::~IM_IdxHandler() {
-    if (!(fHandler == nullptr)) {
-        //std::cout<<123<<std::endl;
-        //CloseTbl();
+IM_IdxHandler::~IM_IdxHandler()
+{
+    if (!(fHandler == nullptr))
+    {
+        // std::cout<<123<<std::endl;
+        // CloseTbl();
         delete fHandler;
     }
-    //delete fHandler;
+    // delete fHandler;
 }
-RC IM_IdxHandler::OpenIdx(const char* idxPath) {
-    if (fHandler == nullptr) {
+RC IM_IdxHandler::OpenIdx(const char *idxPath)
+{
+    if (fHandler == nullptr)
+    {
         fHandler = new FM_FileHandler;
     }
     isChanged = false;
-    
+
     int status = fM_Manager->OpenFile(idxPath, *fHandler);
     auto names = GetIdxName(idxPath);
     //获取索引字段元信息
@@ -53,128 +57,182 @@ RC IM_IdxHandler::OpenIdx(const char* idxPath) {
     lims.push_back(opt);
     tblHdl.GetIter(iter);
     RM_Record rec = iter.NextRec();
-    if (rec.rid.num == -1) {
-        std::cout<<"Index Not Exist\n";
+    if (rec.rid.num == -1)
+    {
+        std::cout << "Index Not Exist\n";
         return NOT_EXIST;
     }
     rec.GetColData(tblHdl.GetMeta(), 3, &attrType);
-    switch(attrType) {
-        case DB_INT:
-            attrLen = sizeof(int);
-            break;
-        case DB_DOUBLE:
-            attrLen = sizeof(double);
-            break;
-        case DB_BOOL:
-            attrLen = sizeof(bool);
-            break;
-        case DB_STRING:
-            rec.GetColData(tblHdl.GetMeta(), 4, &attrLen);
-            break;
+    switch (attrType)
+    {
+    case DB_INT:
+        attrLen = sizeof(int);
+        break;
+    case DB_DOUBLE:
+        attrLen = sizeof(double);
+        break;
+    case DB_BOOL:
+        attrLen = sizeof(bool);
+        break;
+    case DB_STRING:
+        rec.GetColData(tblHdl.GetMeta(), 4, &attrLen);
+        break;
     }
     tblHdl.CloseTbl();
 
     return status;
 }
-RC IM_IdxHandler::CloseIdx() {
+RC IM_IdxHandler::CloseIdx()
+{
     isChanged = false;
     return fM_Manager->CloseFile(*fHandler);
 }
 
-IM_IdxHandler::IM_IdxHandler(const char* idxPath) {
+IM_IdxHandler::IM_IdxHandler(const char *idxPath)
+{
     fHandler = new FM_FileHandler;
     OpenIdx(idxPath);
-    //std::cout<<status<<std::endl;
+    // std::cout<<status<<std::endl;
 }
 
-RC IM_IdxHandler::FindInsertPos(void* pData, BTreeNode& L) {
+RC IM_IdxHandler::FindInsertPos(void *pData, BTreeNode &L)
+{
+    //printf("haha %s\n", pData);
     FM_FileHdr fHdr = fHandler->GetFileHdr();
     MM_PageHandler pHdl;
     gBuffer->GetPage(FM_Bid(fHandler->GetFd(), fHdr.preF), pHdl);
     L.SetData(pHdl);
     RM_Rid nex = L.GetSon(pData);
-    while (nex.num != -1) {
+    //std::cout<<nex.num<<std::endl;
+    /*
+    printf("head %d\n", L.bid.num);
+    printf("total blk num %d\n", fHdr.blkCnt);
+    for (auto i : L.keys) {
+        printf("root %s\n", i);
+    }
+    */
+
+    while (nex.num != -1)
+    {
         gBuffer->GetPage(FM_Bid(fHandler->GetFd(), nex.num), pHdl);
         L.SetData(pHdl);
         nex = L.GetSon(pData);
     }
-    //std::cout<<"ggg"<<std::endl;
+    // std::cout<<"ggg"<<std::endl;
     return SUCCESS;
 }
 
-RC IM_IdxHandler::FindLeaf(void* pData, const RM_Rid &rid, BTreeNode& L) {
+RC IM_IdxHandler::FindLeaf(void *pData, const RM_Rid &rid, BTreeNode &L)
+{
     FM_FileHdr fHdr = fHandler->GetFileHdr();
     MM_PageHandler pHdl;
     gBuffer->GetPage(FM_Bid(fHandler->GetFd(), fHdr.preF), pHdl);
     L.SetData(pHdl);
     RM_Rid nex = L.GetFirstSon(pData);
-    while (nex.num != -1) {
+    //std::cout<<L.GetBlkNum()<<std::endl;
+    //std::cout<<nex.num<<std::endl;
+    while (nex.num != -1)
+    {
         gBuffer->GetPage(FM_Bid(fHandler->GetFd(), nex.num), pHdl);
         L.SetData(pHdl);
         nex = L.GetFirstSon(pData);
     }
-
-    while(true) {
-        if (L.Contain(pData, rid)) return SUCCESS;
-        if (L.Ptrs.size()%2 == 0) break;
+    //std::cout<<L.GetBlkNum()<<std::endl;
+    while (true)
+    {
+        if (L.Contain(pData, rid))
+            return SUCCESS;
+        if (L.Ptrs.size() % 2 == 0)
+            break;
         gBuffer->GetPage(FM_Bid(fHandler->GetFd(), L.Ptrs.back().num), pHdl);
         L.SetData(pHdl);
     }
-    //std::cout<<"ggg"<<std::endl;
+    std::cout<<"Leaf That Contain Key Not Exist"<<std::endl;
     return NOT_EXIST;
 }
 
-
-
-RC IM_IdxHandler::InsertEntry(void *pData, const RM_Rid &rid) {
+RC IM_IdxHandler::InsertEntry(void *pData, const RM_Rid &rid)
+{
     FM_FileHdr fHdr = fHandler->GetFileHdr();
     BTreeNode L(attrType, attrLen);
-    //std::cout<<fHdr.blkCnt<<std::endl;
-    if (fHdr.blkCnt == 1) {  //树为空
+    //std::cout<<fHdr.preF<<std::endl;
+    if (fHdr.blkCnt == 1)
+    { //树为空
         //创建空叶节点
-        //std::cout<<"123"<<std::endl;
+        // std::cout<<"123"<<std::endl;
         MM_PageHandler pHdl;
         int num = fHandler->GetNextWhole();
+        fHdr = fHandler->GetFileHdr();
+        //std::cout<<fHandler->GetFileHdr().blkCnt<<std::endl;
         fHdr.preF = num;
         fHandler->SetFileHdr(fHdr);
         fHandler->SetChanged(true);
-        gBuffer->GetPage(FM_Bid(fHandler->GetFd(), num), pHdl);
+        int s = gBuffer->GetPage(FM_Bid(fHandler->GetFd(), num), pHdl);
+        //std::cout<<fHandler->GetFileHdr().blkCnt<<std::endl;
         L.SetData(pHdl);
-
+        //std::cout<<"123"<<std::endl;
     }
-    else {
+    else
+    {
         //找到应该包含pData的叶节点
         //std::cout<<"112"<<std::endl;
+        MM_PageHandler pHdl;
+        BTreeNode LL(attrType, attrLen);
+
         FindInsertPos(pData, L);
+
+        //std::cout<<L.GetBlkNum()<<std::endl;
+        
     }
-    if (L.GetKeyNum() < L.GetMaxPNum() - 1) {
-        //std::cout<<L.GetKeyNum()<< " "<< L.GetMaxPNum()<< std::endl;
+    //std::cout<<"123"<<std::endl;
+    if (L.GetKeyNum() < L.GetMaxPNum() - 1)
+    {
+        // std::cout<<L.GetKeyNum()<< " "<< L.GetMaxPNum()<< std::endl;
+        /*
+        printf("-------------------\n");   
+        for (auto i : L.keys) {
+            printf("0 %s\n", i);
+        }
+        */
         L.InsertPair(pData, rid);
+        
         MM_PageHandler pHdl;
         gBuffer->GetPage(FM_Bid(fHandler->GetFd(), L.GetBlkNum()), pHdl);
         return L.SetPage(pHdl);
     }
-    else {
-        //std::cout<<"dsd"<< std::endl;
+    else
+    {
+        // std::cout<<"dsd"<< std::endl;
         //分裂
         //创建新节点
+        /*
+        for (auto i : L.keys) {
+        printf("0 %s\n", i);
+        }
+        */
+        
+        
         BTreeNode L2(attrType, attrLen);
         MM_PageHandler pHdl;
         int num = fHandler->GetNextWhole();
-        //std::cout<<num<< std::endl;
+        // std::cout<<num<< std::endl;
         gBuffer->GetPage(FM_Bid(fHandler->GetFd(), num), pHdl);
         L2.SetData(pHdl);
         //
         BTreeNode T(L);
-        T.Ptrs.pop_back();
+        if (T.Ptrs.size() == T.keys.size() + 1)
+            T.Ptrs.pop_back();
         T.InsertPair(pData, rid);
-        L2.Ptrs.push_back(L.Ptrs.back());
-        L.Ptrs.pop_back(); L.Ptrs.push_back(RM_Rid(L2.bid.num, 0));
+        if (L.Ptrs.size() == L.keys.size() + 1) {
+            L2.Ptrs.push_back(L.Ptrs.back());
+            L.Ptrs.pop_back();
+        }
+        L.Ptrs.push_back(RM_Rid(L2.bid.num, 0));
         L.EraseNPair(L.GetMaxPNum() - 1);
         int half = ceil(L.GetMaxPNum() / 2.0);
         auto p1 = T.Ptrs.begin();
         auto p2 = T.keys.begin();
-        for(int i = 0; i < half; ++i)
+        for (int i = 0; i < half; ++i)
         {
             p1++;
             p2++;
@@ -185,41 +243,60 @@ RC IM_IdxHandler::InsertEntry(void *pData, const RM_Rid &rid) {
         L2.Ptrs.splice(L2.Ptrs.begin(), T.Ptrs, T.Ptrs.begin(), T.Ptrs.end());
         L2.keys.splice(L2.keys.begin(), T.keys, T.keys.begin(), T.keys.end());
         L2.pHdr.firstHole = L2.keys.size();
-        void* k2 = nullptr;
-        switch(attrType) {
-            case DB_INT:
-                k2 = new int(*(int*)L2.keys.front());
-                break;
-            case DB_DOUBLE:
-                k2 = new double(*(double*)L2.keys.front());
-                break;
-            case DB_STRING:
-                k2 = new char[attrLen];
-                strcpy((char*)k2, (char*)L2.keys.front());
-                break;
-            case DB_BOOL:
-                k2 = new bool(*(bool*)L2.keys.front());
-                break;
+        void *k2 = nullptr;
+        switch (attrType)
+        {
+        case DB_INT:
+            k2 = new int(*(int *)L2.keys.front());
+            break;
+        case DB_DOUBLE:
+            k2 = new double(*(double *)L2.keys.front());
+            break;
+        case DB_STRING:
+            k2 = new char[attrLen];
+            strcpy((char *)k2, (char *)L2.keys.front());
+            break;
+        case DB_BOOL:
+            k2 = new bool(*(bool *)L2.keys.front());
+            break;
         }
         //写回缓存
+        //std::cout<<L.bid.num<<L2.bid.num<< std::endl;
         gBuffer->GetPage(FM_Bid(fHandler->GetFd(), L.GetBlkNum()), pHdl);
         L.SetPage(pHdl);
         gBuffer->GetPage(FM_Bid(fHandler->GetFd(), L2.GetBlkNum()), pHdl);
         L2.SetPage(pHdl);
+        
+        /*
+        std::cout<<L.bid.num<<std::endl;
+        std::cout<<L.GetKeyNum()<<std::endl;
+        for (auto i : L.keys) {
+        printf("12 %s\n", i);
+        }
+        std::cout<<L2.bid.num<<std::endl;
+        std::cout<<L2.GetKeyNum()<<std::endl;
+        for (auto i : L2.keys) {
+        printf("22 %s\n", i);
+        }
+        */
+        //printf("key %s\n", k2);
+        
         //std::cout<<L.bid.num<<L2.bid.num<< std::endl;
         return InsertInParent(L, k2, L2);
     }
     return SUCCESS;
-
 }
 
-RC IM_IdxHandler::InsertInParent(BTreeNode&N1, void*key, BTreeNode& N2) {
-    if (N1.isRoot()) {
+RC IM_IdxHandler::InsertInParent(BTreeNode &N1, void *key, BTreeNode &N2)
+{
+    if (N1.isRoot())
+    {
         //创建新根节点
-        //std::cout<<"123"<<std::endl;
+        // std::cout<<"123"<<std::endl;
         BTreeNode R(attrType, attrLen);
         MM_PageHandler pHdl;
         int num = fHandler->GetNextWhole();
+        //std::cout<<num<<std::endl;
         gBuffer->GetPage(FM_Bid(fHandler->GetFd(), num), pHdl);
         R.SetData(pHdl);
         R.keys.push_back(key);
@@ -234,56 +311,69 @@ RC IM_IdxHandler::InsertInParent(BTreeNode&N1, void*key, BTreeNode& N2) {
         N1.SetPage(pHdl);
         gBuffer->GetPage(FM_Bid(fHandler->GetFd(), N2.GetBlkNum()), pHdl);
         N2.SetPage(pHdl);
+        auto fHdr = fHandler->GetFileHdr();
+        fHdr.preF = R.bid.num;
+        //std::cout<<fHdr.preF<<std::endl;
+        fHandler->SetChanged(true);
+        fHandler->SetFileHdr(fHdr);
+
         return SUCCESS;
     }
     //插入父节点
     BTreeNode P(attrType, attrLen);
     MM_PageHandler pHdl;
     int num = N1.pHdr.preFreePage;
-    //std::cout<<N1.bid.num<<" "<<num<<std::endl;
+    // std::cout<<N1.bid.num<<" "<<num<<std::endl;
     gBuffer->GetPage(FM_Bid(fHandler->GetFd(), num), pHdl);
     P.SetData(pHdl);
-    if (P.keys.size() < P.GetMaxPNum()) {
+    if (P.Ptrs.size() < P.GetMaxPNum())
+    {
         //父节点有空位
-        //std::cout<<"111"<<std::endl;
+        // std::cout<<"111"<<std::endl;
         auto iter = P.Ptrs.begin();
         auto iter2 = P.keys.begin();
-        while((*iter).num != N1.bid.num) iter++, iter2++;
-        //std::cout<<"222"<<std::endl;
-        iter++, iter2++;
+        while ((*iter).num != N1.bid.num)
+            iter++, iter2++;
+        // std::cout<<"222"<<std::endl;
+        iter++;
         P.Ptrs.insert(iter, RM_Rid(N2.bid.num, 0));
         P.keys.insert(iter2, key);
         P.pHdr.firstHole++;
+        P.pHdr.freeBtsCnt++;
         P.SetPage(pHdl);
         N2.pHdr.preFreePage = num;
         gBuffer->GetPage(FM_Bid(fHandler->GetFd(), N2.bid.num), pHdl);
         return N2.SetPage(pHdl);
-    }else {
+    }
+    else
+    {
         //分裂
-        //std::cout<<"1232"<<std::endl;
+        // std::cout<<"1232"<<std::endl;
         BTreeNode T(P);
         auto iter = T.Ptrs.begin();
         auto iter2 = T.keys.begin();
-        
-        while((*iter).num != N1.bid.num) iter++, iter2++;
-        iter++, iter2++;
+
+        while ((*iter).num != N1.bid.num)
+            iter++, iter2++;
+        iter++;
         T.Ptrs.insert(iter, RM_Rid(N2.bid.num, 0));
         T.keys.insert(iter2, key);
         T.pHdr.firstHole++;
+        T.pHdr.freeBtsCnt++;
 
         P.EraseNPair(P.keys.size());
         P.Ptrs.clear();
-        
+
         BTreeNode P2(attrType, attrLen);
         MM_PageHandler pHdl;
         int num = fHandler->GetNextWhole();
         gBuffer->GetPage(FM_Bid(fHandler->GetFd(), num), pHdl);
         P2.SetData(pHdl);
 
-        int half = ceil((P.GetMaxPNum() + 1) / 2.0);
+        int half = ceil(P.GetMaxPNum() / 2.0);
         auto p1 = T.Ptrs.begin();
         auto p2 = T.keys.begin();
-        for(int i = 0; i < half; ++i)
+        for (int i = 0; i < half; ++i)
         {
             p1++;
             p2++;
@@ -292,38 +382,220 @@ RC IM_IdxHandler::InsertInParent(BTreeNode&N1, void*key, BTreeNode& N2) {
         P.Ptrs.splice(P.Ptrs.begin(), T.Ptrs, T.Ptrs.begin(), p1);
         P.keys.splice(P.keys.begin(), T.keys, T.keys.begin(), p2);
         P.pHdr.firstHole = P.keys.size();
-        void* kn = T.keys.front();
+        P.pHdr.freeBtsCnt = P.Ptrs.size();
+
+        void *kn = nullptr;
+        switch(attrType) {
+            case DB_INT:
+                kn = new int;
+                memcpy(kn, T.keys.back(), sizeof(int));
+                break;
+            case DB_DOUBLE:
+                kn = new double;
+                memcpy(kn, T.keys.back(), sizeof(double));
+                break;
+            case DB_STRING:
+                kn = new char[attrLen];
+                strcpy((char*)kn, (char*)T.keys.back());
+                break;
+            case DB_BOOL:
+                kn = new bool;
+                memcpy(kn, T.keys.back(), sizeof(bool));
+                break;
+        }
         T.keys.pop_front();
+
         P2.Ptrs.splice(P2.Ptrs.begin(), T.Ptrs, T.Ptrs.begin(), T.Ptrs.end());
         P2.keys.splice(P2.keys.begin(), T.keys, T.keys.begin(), T.keys.end());
         P2.pHdr.firstHole = P2.keys.size();
+        P2.pHdr.freeBtsCnt = P2.Ptrs.size();
 
-         //写回缓存
+        //写回缓存
         gBuffer->GetPage(FM_Bid(fHandler->GetFd(), P.GetBlkNum()), pHdl);
         P.SetPage(pHdl);
-        gBuffer->GetPage(FM_Bid(fHandler->GetFd(), P.GetBlkNum()), pHdl);
-        P.SetPage(pHdl);
+        gBuffer->GetPage(FM_Bid(fHandler->GetFd(), P2.GetBlkNum()), pHdl);
+        P2.SetPage(pHdl);
 
         return InsertInParent(P, kn, P2);
     }
-
 }
-RC IM_IdxHandler::DeleteEntry(void *pData, const RM_Rid &rid) {
+RC IM_IdxHandler::DeleteEntry(void *pData, const RM_Rid &rid)
+{
     BTreeNode N(attrType, attrLen);
     FindLeaf(pData, rid, N);
     return DeleteEntry(N, pData, rid);
 }
 
-RC IM_IdxHandler::DeleteEntry(BTreeNode& N, void *pData, const RM_Rid &rid) {
+RC IM_IdxHandler::DeleteEntry(BTreeNode &N, void *pData, const RM_Rid &rid)
+{
     FM_FileHdr fHdr = fHandler->GetFileHdr();
-    //TODO 当前只考虑了非重复键
-    N.DeleteSinglePair(pData, rid);
-    if (N.isRoot() && N.Ptrs.size() == 1) {
+    // TODO 当前只考虑了非重复键
+    int s = N.DeleteSinglePair(pData, rid);
+    //std::cout<<s<<std::endl;
+    if (N.isRoot() && N.Ptrs.empty()) {
+        fHdr.preF = -1;
+        fHdr.firstFreeHole = 0;
+        fHdr.blkCnt = 1;
+        fHandler->SetChanged(true);
+        fHandler->SetFileHdr(fHdr);
+        return SUCCESS;
+    }
+    //std::cout<<"1232"<<std::endl;
+    if (N.isRoot() && N.Ptrs.size() == 1)
+    {
         fHdr.preF = (*N.Ptrs.begin()).num;
         fHandler->SetChanged(true);
         fHandler->SetFileHdr(fHdr);
         fHandler->ReturnWhole(N.bid.num);
         return SUCCESS;
+    }
+    else if (!N.isRoot() && N.Ptrs.size() < ceil(N.GetMaxPNum() / 2.0))
+    {
+        int pNum = N.GetParent();
+        BTreeNode P(attrType, attrLen);
+        BTreeNode N2(attrType, attrLen);
+        MM_PageHandler pHdl;
+        gBuffer->GetPage(FM_Bid(fHandler->GetFd(), pNum), pHdl);
+        P.SetData(pHdl);
+        auto pair1 = P.GetLeftBro(RM_Rid(N.GetBlkNum(), 0));
+        auto pair2 = P.GetRightBro(RM_Rid(N.GetBlkNum(), 0));
+        if (pair1.first == nullptr || pair2.first == nullptr)
+        {
+            std::cout << "Can't find brother.\n";
+            return FAILURE;
+        }
+        bool isLeft = false;
+        void *k2;
+        if (pair1.first != nullptr)
+        {
+            gBuffer->GetPage(FM_Bid(fHandler->GetFd(), pair1.second.num), pHdl);
+            N2.SetData(pHdl);
+            k2 = pair1.first;
+            isLeft = true;
+        }
+        if (pair2.first != nullptr)
+        {
+            if (isLeft)
+            {
+                BTreeNode N3(attrType, attrLen);
+                gBuffer->GetPage(FM_Bid(fHandler->GetFd(), pair2.second.num), pHdl);
+                N3.SetData(pHdl);
+                if (N3.Ptrs.size() < N2.Ptrs.size())
+                {
+                    N2 = N3;
+                    k2 = pair2.first;
+                    isLeft = false;
+                }
+            }
+            else
+            {
+                gBuffer->GetPage(FM_Bid(fHandler->GetFd(), pair2.second.num), pHdl);
+                k2 = pair2.first;
+                N2.SetData(pHdl);
+            }
+        }
+        if (N.Ptrs.size() + N2.Ptrs.size() <= N.GetMaxPNum())
+        {
+            //能够合并
+            if (!isLeft)
+            {
+                // N是N'的前一个节点
+                BTreeNode TMP(N);
+                N = N2;
+                N2 = TMP;
+            }
+            if (!N.isLeaf())
+            {
+                N2.keys.push_back(k2);
+            }
+            else
+            {
+                N2.Ptrs.pop_back();
+            }
+            N2.keys.splice(N2.keys.end(), N.keys, N.keys.begin(), N.keys.end());
+            N2.Ptrs.splice(N2.Ptrs.end(), N.Ptrs, N.Ptrs.begin(), N.Ptrs.end());
+            gBuffer->GetPage(FM_Bid(fHandler->GetFd(), N2.bid.num), pHdl);
+            N2.SetPage(pHdl);
+            fHandler->ReturnWhole(N.bid.num);
 
+            DeleteEntry(P, k2, RM_Rid(N.GetBlkNum(), 0));
+
+            switch (attrType)
+            {
+            case DB_INT:
+                delete (int *)k2;
+                break;
+            case DB_DOUBLE:
+                delete (double *)k2;
+                break;
+            case DB_STRING:
+                delete[](char *) k2;
+                break;
+            case DB_BOOL:
+                delete (bool *)k2;
+                break;
+            }
+            return SUCCESS;
+        }
+        else
+        {
+            //重新分布
+            if (isLeft) {
+                if (!N.isLeaf()) {
+                    RM_Rid pm = N2.Ptrs.back();
+                    void* km_1 = N2.keys.back();
+                    N2.Ptrs.pop_back();
+                    N2.keys.pop_back();
+                    N.keys.push_front(k2);
+                    N.Ptrs.push_front(pm);
+                    P.ReplaceKey(k2, km_1);
+                }else {
+                    auto iter = N2.Ptrs.rbegin();
+                    iter++;
+                    RM_Rid pm = *iter;
+                    void* km = N2.keys.back();
+                    iter++;
+                    N2.Ptrs.erase(iter.base());
+                    N2.keys.pop_back();
+                    N.keys.push_front(km);
+                    N.Ptrs.push_front(pm);
+                    P.ReplaceKey(k2, km);
+                }
+                gBuffer->GetPage(FM_Bid(fHandler->GetFd(), P.GetBlkNum()), pHdl);
+                P.SetPage(pHdl);
+                gBuffer->GetPage(FM_Bid(fHandler->GetFd(), N.GetBlkNum()), pHdl);
+                N.SetPage(pHdl);
+                gBuffer->GetPage(FM_Bid(fHandler->GetFd(), N2.GetBlkNum()), pHdl);
+                N2.SetPage(pHdl);
+                return SUCCESS;
+            }else {
+               if (!N.isLeaf()) {
+                    RM_Rid pm = N2.Ptrs.front();
+                    void* km_1 = N2.keys.front();
+                    N2.Ptrs.pop_front();
+                    N2.keys.pop_front();
+                    N.keys.push_back(k2);
+                    N.Ptrs.push_back(pm);
+                    P.ReplaceKey(k2, km_1);
+
+               }else {
+                    RM_Rid pm = N2.Ptrs.front();
+                    void* km = N2.keys.front();
+                    N2.Ptrs.pop_front();
+                    N2.keys.pop_front();
+                    N.keys.push_back(km);
+                    N.Ptrs.push_back(pm);
+                    P.ReplaceKey(k2, km);
+               } 
+                gBuffer->GetPage(FM_Bid(fHandler->GetFd(), P.GetBlkNum()), pHdl);
+                P.SetPage(pHdl);
+                gBuffer->GetPage(FM_Bid(fHandler->GetFd(), N.GetBlkNum()), pHdl);
+                N.SetPage(pHdl);
+                gBuffer->GetPage(FM_Bid(fHandler->GetFd(), N2.GetBlkNum()), pHdl);
+                N2.SetPage(pHdl);
+                return SUCCESS;
+            }
+
+        }
     }
 }

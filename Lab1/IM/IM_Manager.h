@@ -12,7 +12,7 @@ public:
 	RC FindIndex(const char* tblPath, int colPos) const;
 	RC OpenIndex(const char* tblPath, int colPos,  IM_IdxHandler& handler);
 	RC CloseIndex(IM_IdxHandler& handler);
-
+	RC ClearIndex(const char* tblPath, int colPos);
 private:
 
 };

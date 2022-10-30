@@ -429,5 +429,6 @@ void task3() {
     IM_Manager iManager;
     iManager.CreateIndex((WORK_DIR + "account").c_str(), 0);
 
+    iManager.ClearIndex((WORK_DIR + "account").c_str(), 0);
 }
 

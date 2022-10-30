@@ -10,7 +10,7 @@ struct MM_PageHeader {
 
     int slotCnt;  //用于索引时表示最大键数
     int freeOff;
-    int freeBtsCnt;
+    int freeBtsCnt;     //用于索引时表示当前已有指针数
     int firstHole;     //用于索引时表示当前已有键数
     int preFreePage;    //用于索引时表示父节点，0表示根
     int nextFreePage;   //用于索引时-1表示叶节点 1表示非叶节点

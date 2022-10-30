@@ -27,16 +27,21 @@ public:
     RC DeleteSinglePair(void* key, const RM_Rid& ptr);
     RC DeletePair(void* key, const RM_Rid& ptr);
     RC EraseNPair(int n);
-    RC Remove(const void* key);
+    //RC Remove(const void* key);
+    RC ReplaceKey(void* src, void*tar);
+
     RM_Rid GetSon(void* pData);
     RM_Rid GetFirstSon(void* pData);
+    std::pair<void*, RM_Rid> GetLeftBro(const RM_Rid& ptr);
+    std::pair<void*, RM_Rid> GetRightBro(const RM_Rid& ptr);
     int GetMaxPNum()const {return pHdr.slotCnt;}
     int GetKeyNum() const {return keys.size();}
     int GetBlkNum() const {return bid.num;}
     bool isRoot() const {return pHdr.preFreePage == 0;}
+    bool isLeaf() const {return pHdr.nextFreePage == -1;}
     int GetParent() const {return pHdr.preFreePage;}
     bool Contain(void* key, const RM_Rid& ptr);
-
+    RC Clear();
 private:
     bool Less(const void*, const void*) const;
     bool Greater(const void*, const void*) const;
