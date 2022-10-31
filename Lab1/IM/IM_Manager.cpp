@@ -187,3 +187,9 @@ RC IM_Manager::OpenIndex(const char* tblPath, int colPos,  IM_IdxHandler& handle
 RC IM_Manager::CloseIndex(IM_IdxHandler& handler) {
     return handler.CloseIdx();
 }
+
+RC IM_Manager::TraverseLeaf(const char* tblPath, int colPos) {
+    IM_IdxHandler iHdl((tblPath + ("_" + std::to_string(colPos))).c_str());
+    iHdl.Traverse();
+    return iHdl.CloseIdx();
+}

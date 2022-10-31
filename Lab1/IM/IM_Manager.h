@@ -13,6 +13,7 @@ public:
 	RC OpenIndex(const char* tblPath, int colPos,  IM_IdxHandler& handler);
 	RC CloseIndex(IM_IdxHandler& handler);
 	RC ClearIndex(const char* tblPath, int colPos);
+	RC TraverseLeaf(const char* tblPath, int colPos);
 private:
 
 };

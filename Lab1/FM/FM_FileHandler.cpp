@@ -16,7 +16,7 @@ RC FM_FileHandler::GetBlock(int bNum, char* buf) {
     }
     if (bNum + 1 > this->fHdr.blkCnt) {
         //std::cout<<bNum<< " " << this->fHdr.blkCnt<<std::endl;
-        std::cout<<"Block Out Of File Range"<<std::endl;
+        std::cout<<"Block "<<bNum<<"Out Of File Range "<<fHdr.blkCnt<<std::endl;
         return OUT_OF_RANGE_ERROR;
     }
     lseek(this->fd, bNum * BLOCK_SIZE, SEEK_SET);
@@ -159,8 +159,10 @@ int FM_FileHandler::GetNextWhole() {
     //std::cout<<newPHdr.freeBtsCnt<<std::endl;
     int res = write(this->fd, &newPHdr, sizeof(MM_PageHdr));
 
-    if (res != sizeof(MM_PageHdr))
+    if (res != sizeof(MM_PageHdr)) {
+        std::cout<<"IO ERROR"<<std::endl;
         return IO_ERROR;
+    }
     this->fHdr.blkCnt ++;
     //std::cout<<fHdr.blkCnt<<std::endl;
     this->changed = true;

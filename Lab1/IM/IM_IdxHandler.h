@@ -41,9 +41,12 @@ public:
     RC OpenIdx(const char* idxPath);   
     RC CloseIdx();    
     dbType GetType() const {return attrType;}
-    int GetLen() const {return attrLen;}                   
+    int GetLen() const {return attrLen;}     
+    RC Traverse();              
 
 private:
+    RC GetFirstLeaf(BTreeNode& L);
+    RC GetLastLeaf(BTreeNode& L);
     RC FindInsertPos(void* pData, BTreeNode& L);
     RC DeleteEntry(BTreeNode& L, void *pData, const RM_Rid &rid);  
     RC FindLeaf(void* pData, const RM_Rid &rid, BTreeNode& L);

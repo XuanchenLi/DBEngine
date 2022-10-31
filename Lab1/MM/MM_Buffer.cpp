@@ -116,8 +116,10 @@ RC MM_Buffer::ForcePage(int fd) {
 
 RC MM_Buffer::Pin(FM_Bid bid) {
     auto pr = hashTbl.find(bid);
-    if (pr == hashTbl.end())
+    if (pr == hashTbl.end()) {
+        std::cout<<"Buffer Not Exist"<<std::endl;
         return NOT_EXIST;
+    }
     int idx = pr->second;
     if (units[idx].refCount == 0) {
         victimList.remove(idx);
@@ -164,7 +166,7 @@ RC MM_Buffer::GetPage(FM_Bid bid, MM_PageHandler& hdl) {
         std::cout<<"!!!BUFFER USED OUT!!!"<<std::endl;
         return FAILURE;
     }
-    if (forFile) {
+
         FM_FileHandler* fHdl = nullptr;
         if (fM_Manager->GetFileHandle(bid.fd, &fHdl) != SUCCESS) {
             return NOT_EXIST;
@@ -175,12 +177,11 @@ RC MM_Buffer::GetPage(FM_Bid bid, MM_PageHandler& hdl) {
             //std::cout<<"22223"<<std::endl;
             return FAILURE;
         }
+        units[slot].bid = bid;
+        units[slot].dirty = false;
+        hashTbl.insert(std::make_pair(bid, slot));
         hdl.SetPage(&units[slot]);
-    }
-    
-    units[slot].bid = bid;
-    units[slot].dirty = false;
-    hashTbl.insert(std::make_pair(bid, slot));
+
     //Pin(bid);
     return SUCCESS;
 }

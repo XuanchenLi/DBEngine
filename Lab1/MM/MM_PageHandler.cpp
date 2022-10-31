@@ -25,7 +25,8 @@ MM_PageHandler& MM_PageHandler::operator= (const MM_PageHandler & rhs) {
         if (buf != nullptr) Unpin();
         buf = rhs.buf;
         pHdr = rhs.pHdr;
-        Pin();
+        if (buf != nullptr)
+            Pin();
         return *this;
     }
 
@@ -37,15 +38,18 @@ RC MM_PageHandler::SetPage(MM_BufferUnit* unit) {
     pHdr = *((MM_PageHdr*) buf->GetPtr());
     //memcpy(&pHdr, buf->GetPtr(), sizeof(MM_PageHdr));
     //std::cout<<"casac"<<pHdr.freeBtsCnt<<std::endl;
+    //std::cout<<"12312"<<std::endl;
     this->Pin();
     return SUCCESS;
 }
 
 RC MM_PageHandler::Pin() {
+    //std::cout<<"pin "<<buf->GetBid().num<<std::endl;
     return gBuffer->Pin(buf->GetBid());
 }
 
 RC MM_PageHandler::Unpin() {
+    //std::cout<<"unpin "<<buf->GetBid().num<<std::endl;
     return gBuffer->Unpin(buf->GetBid());
 }
 

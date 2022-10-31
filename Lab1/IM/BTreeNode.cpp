@@ -181,6 +181,7 @@ RC BTreeNode::SetData(const MM_PageHandler& pHdl) {
             ptr += sizeof(RM_Rid);
         }
     }
+    
     return SUCCESS;
 }
 
@@ -189,8 +190,10 @@ bool BTreeNode::Contain(void* key, const RM_Rid& ptr) {
     if (this->keys.empty()) return false;
     auto iter1 = keys.begin();
     auto iter2 = Ptrs.begin();
-    while (iter1 != keys.end() && iter2 != Ptrs.end() && (!Equal((*iter1), key) || !(ptr == (*iter2)))) iter1++, iter2++;
-    if (iter1 == keys.end() || iter2 == Ptrs.end()) return false;
+    while (iter1 != keys.end() && (!Equal((*iter1), key) || !(ptr == (*iter2)))) iter1++, iter2++;
+    
+    
+    if (iter1 == keys.end()) return false;
     return true;
 }
 
@@ -263,9 +266,11 @@ RM_Rid BTreeNode::GetFirstSon(void* pData) {
     for (auto i = keys.begin(); i != keys.end(); ++i, j++) {
         //printf("%s %s\n", *i, pData);
         if (Greater(*i, pData)) {
+            //printf("greater %s %s\n", *i, pData);
             res = *j;
             return res;
         }else if (Equal(pData, *i)) {
+            //printf("equal %s %s\n", *i, pData);
             j++;
             return *j;
         }   
@@ -384,8 +389,15 @@ RC BTreeNode::InsertPair(void* key, const RM_Rid& ptr) {
             }
         }
         //std::cout<<"123"<<std::endl;
+        if (Ptrs.size() == keys.size()) {
+            Ptrs.push_back(ptr);
+        }else {
+            auto p = Ptrs.back();
+            Ptrs.pop_back();
+            Ptrs.push_back(ptr);
+            Ptrs.push_back(p);
+        }
         keys.push_back(key);
-        Ptrs.push_back(ptr);
         
         return SUCCESS;
     }
