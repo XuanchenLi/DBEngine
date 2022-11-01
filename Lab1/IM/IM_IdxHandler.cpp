@@ -868,3 +868,11 @@ RC IM_IdxHandler::Traverse() {
     }
     return SUCCESS;
 }
+
+RC IM_IdxHandler::UpdateEntry(void *pData, const RM_Rid &rid, void*nData, const RM_Rid & nRid) {
+    int st = 0;
+    if (st = DeleteEntry(pData, rid) != SUCCESS) {
+        return st;
+    }
+    return InsertEntry(nData, nRid);
+}

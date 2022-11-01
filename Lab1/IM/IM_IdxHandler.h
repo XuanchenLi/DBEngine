@@ -38,6 +38,7 @@ public:
 
     RC InsertEntry(void *pData, const RM_Rid &rid);  
     RC DeleteEntry(void *pData, const RM_Rid &rid);  
+    RC UpdateEntry(void *pData, const RM_Rid &rid, void*nData, const RM_Rid & nRid);  
     RC OpenIdx(const char* idxPath);   
     RC CloseIdx();    
     dbType GetType() const {return attrType;}
