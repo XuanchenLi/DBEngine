@@ -425,7 +425,10 @@ RC BTreeNode::DeleteSinglePair(void* key, const RM_Rid& ptr) {
     auto iter2 = Ptrs.begin();
     while (iter1 != keys.end() && !Equal((*iter1), key)) iter1++;
     while (iter2 != Ptrs.end() && !(ptr == (*iter2))) iter2++;
-    if (iter1 == keys.end() || iter2 == Ptrs.end()) return NOT_EXIST;
+    if (iter1 == keys.end() || iter2 == Ptrs.end()) {
+        std::cout<<"pair not exist"<<std::endl;
+        return NOT_EXIST;
+    }
     keys.erase(iter1);
     Ptrs.erase(iter2);
 
