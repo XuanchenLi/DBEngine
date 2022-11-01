@@ -385,7 +385,7 @@ void task1() {
     char bN[5][30] = {"Downtown", "Perryridge", "Redwood", "Mianus", "Brighton"};
     double balance;
     RM_RecAux rAux;
-    for (int i = 0; i < 200; ++i) {
+    for (int i = 0; i < 10000; ++i) {
         rAux.Clear();
         rAux.strValue.push_back(
             std::make_pair<std::string, std::string>("account_number", "A-" + to_string(i))
@@ -430,5 +430,6 @@ void task3() {
     iManager.CreateIndex((WORK_DIR + "account").c_str(), 0);
     //iManager.TraverseLeaf((WORK_DIR + "account").c_str(), 0);
     iManager.ClearIndex((WORK_DIR + "account").c_str(), 0);
+    iManager.TraverseLeaf((WORK_DIR + "account").c_str(), 0);
 }
 

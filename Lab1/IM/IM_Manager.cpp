@@ -142,12 +142,16 @@ RC IM_Manager::ClearIndex(const char* tblPath, int colPos) {
             break;
     }
     
+    int nn = 0;
     while(rec.rid.num != -1) {
         
         rec.GetColData(tblHdl.GetMeta(), colPos, tp);
         //printf("%s\n", tp);
         iHdl.DeleteEntry(tp, rec.rid);
-        iHdl.Traverse();
+        nn++;
+        //if (nn >50 && nn < 100)
+        //if (nn < 8)
+        //iHdl.Traverse();
         rec = iter.NextRec();
     }
     

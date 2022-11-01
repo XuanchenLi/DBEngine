@@ -158,7 +158,7 @@ RC IM_IdxHandler::FindLeaf(void *pData, const RM_Rid &rid, BTreeNode &L)
     */
         
     //std::cout<<L.bid.num<<std::endl;
-    return NOT_EXIST;
+    //return NOT_EXIST;
     //std::cout<<L.GetBlkNum()<<std::endl;
     while (true)
     {
@@ -178,7 +178,7 @@ RC IM_IdxHandler::FindLeaf(void *pData, const RM_Rid &rid, BTreeNode &L)
         //std::cout<<L.Ptrs.back().num<<std::endl;
         L.SetData(pHdl);
     }
-    std::cout<<"Leaf That Contain Key Not Exist"<<std::endl;
+    printf("Leaf That Contain Key %s Ptr %d %d Not Exist\n", pData, rid.num, rid.slot);
     return NOT_EXIST;
 }
 
@@ -255,7 +255,7 @@ RC IM_IdxHandler::InsertEntry(void *pData, const RM_Rid &rid)
         //std::cout<<"new block "<<num<<" "<<fHandler->GetFileHdr().blkCnt<< std::endl;
         gBuffer->GetPage(FM_Bid(fHandler->GetFd(), num), pHdl);
         L2.SetData(pHdl);
-        //std::cout<<L2.bid.num<< std::endl;
+        //std::cout<<"hhhhhhhhhh"<< std::endl;
         //
         BTreeNode T(L);
         if (T.Ptrs.size() == T.keys.size() + 1)
@@ -272,7 +272,9 @@ RC IM_IdxHandler::InsertEntry(void *pData, const RM_Rid &rid)
         //std::cout<<L.bid.num<<" next "<<L2.bid.num<<std::endl;
         //if (L2.Ptrs.size()!=L2.keys.size())
         //std::cout<<L2.bid.num<<" next2 "<<L2.Ptrs.back().num<<std::endl;
+        //std::cout<<"hhhhhhhhhh"<< std::endl;
         L.EraseNPair(L.GetMaxPNum() - 1);
+        //std::cout<<"hhhhhhhhhh"<< std::endl;
         //std::cout<<"L "<<L.Ptrs.size()<<" "<<L.keys.size()<<std::endl;
         int half = ceil(L.GetMaxPNum() / 2.0);
         auto p1 = T.Ptrs.begin();
@@ -313,11 +315,12 @@ RC IM_IdxHandler::InsertEntry(void *pData, const RM_Rid &rid)
         }
         //写回缓存
         //std::cout<<L.bid.num<<L2.bid.num<< std::endl;
+        //std::cout<<"hhhhhhhhhh"<< std::endl;
         gBuffer->GetPage(FM_Bid(fHandler->GetFd(), L.GetBlkNum()), pHdl);
         L.SetPage(pHdl);
         gBuffer->GetPage(FM_Bid(fHandler->GetFd(), L2.GetBlkNum()), pHdl);
         L2.SetPage(pHdl);
-        
+        //std::cout<<"hhhhhhhhhh"<< std::endl;
         /*
         std::cout<<L.bid.num<<std::endl;
         std::cout<<L.GetKeyNum()<<std::endl;
@@ -481,6 +484,7 @@ RC IM_IdxHandler::DeleteEntry(void *pData, const RM_Rid &rid)
 {
     BTreeNode N(attrType, attrLen);
     FindLeaf(pData, rid, N);
+    //printf("----%s in leaf %d----\n", pData, N.bid.num);
     /*
     auto j = N.Ptrs.begin();
     printf("----%s in leaf %d----\n", pData, N.bid.num);
@@ -500,7 +504,7 @@ RC IM_IdxHandler::DeleteEntry(BTreeNode &N, void *pData, const RM_Rid &rid)
     //std::cout<<"1232"<<std::endl;
     int s = N.DeleteSinglePair(pData, rid);
     //std::cout<<"1233"<<std::endl;
-    //std::cout<<s<<std::endl;
+    //std::cout<<N.pHdr.preFreePage<<std::endl;
     if (N.isRoot() && N.Ptrs.empty()) {
         //std::cout<<"1233"<<std::endl;
         fHdr.preF = -1;
@@ -517,10 +521,17 @@ RC IM_IdxHandler::DeleteEntry(BTreeNode &N, void *pData, const RM_Rid &rid)
         fHandler->SetChanged(true);
         fHandler->SetFileHdr(fHdr);
         fHandler->ReturnWhole(N.bid.num);
+        MM_PageHandler pHdl;
+        gBuffer->GetPage(FM_Bid(fHandler->GetFd(), fHdr.preF), pHdl);
+        N.SetData(pHdl);
+        N.pHdr.preFreePage = 0;
+        N.SetPage(pHdl);
+
         return SUCCESS;
     }
     else if (!N.isRoot() && N.Ptrs.size() < ceil(N.GetMaxPNum() / 2.0))
     {
+        //std::cout << "merge\n";
         int pNum = N.GetParent();
         BTreeNode P(attrType, attrLen);
         BTreeNode N2(attrType, attrLen);
@@ -536,15 +547,20 @@ RC IM_IdxHandler::DeleteEntry(BTreeNode &N, void *pData, const RM_Rid &rid)
         }
         bool isLeft = false;
         void *k2;
+        //std::cout<<"1232"<<std::endl;
         if (pair1.first != nullptr)
         {
-            gBuffer->GetPage(FM_Bid(fHandler->GetFd(), pair1.second.num), pHdl);
+            
+            int ss = gBuffer->GetPage(FM_Bid(fHandler->GetFd(), pair1.second.num), pHdl);
+            //std::cout<<"Blk Num: "<<pHdl.GetBid().num<<std::endl;
             N2.SetData(pHdl);
+            //std::cout<<"1233"<<std::endl;
             k2 = pair1.first;
             isLeft = true;
         }
         if (pair2.first != nullptr)
         {
+            //std::cout<<"1232"<<std::endl;
             if (isLeft)
             {
                 BTreeNode N3(attrType, attrLen);
@@ -564,9 +580,16 @@ RC IM_IdxHandler::DeleteEntry(BTreeNode &N, void *pData, const RM_Rid &rid)
                 N2.SetData(pHdl);
             }
         }
-        if (N.Ptrs.size() + N2.Ptrs.size() <= N.GetMaxPNum())
+        int n1s = N.Ptrs.size();
+        int n2s = N2.Ptrs.size();
+        //std::cout<<"1232"<<std::endl;
+        if (N.isLeaf() && N.Ptrs.size() == N.keys.size() + 1 && N2.Ptrs.size() == N2.keys.size() + 1) {
+            n1s--;
+        }
+        if (n1s + n2s <= N.GetMaxPNum())
         {
             //能够合并
+            //std::cout<<"can merge"<<std::endl;
             if (!isLeft)
             {
                 // N是N'的前一个节点
@@ -576,20 +599,41 @@ RC IM_IdxHandler::DeleteEntry(BTreeNode &N, void *pData, const RM_Rid &rid)
             }
             if (!N.isLeaf())
             {
-                N2.keys.push_back(k2);
+                void *kn = nullptr;
+                switch(attrType) {
+                case DB_INT:
+                    kn = new int;
+                    memcpy(kn, k2, sizeof(int));
+                break;
+                case DB_DOUBLE:
+                    kn = new double;
+                    memcpy(kn, k2, sizeof(double));
+                break;
+                case DB_STRING:
+                    kn = new char[attrLen];
+                    strcpy((char*)kn, (char*)k2);
+                    break;
+                case DB_BOOL:
+                    kn = new bool;
+                    memcpy(kn, k2, sizeof(bool));
+                break;
+                }
+                N2.keys.push_back(kn);
             }
             else
             {
-                N2.Ptrs.pop_back();
+                if (N2.Ptrs.size() == N2.keys.size() + 1)
+                    N2.Ptrs.pop_back();
             }
             N2.keys.splice(N2.keys.end(), N.keys, N.keys.begin(), N.keys.end());
             N2.Ptrs.splice(N2.Ptrs.end(), N.Ptrs, N.Ptrs.begin(), N.Ptrs.end());
             gBuffer->GetPage(FM_Bid(fHandler->GetFd(), N2.bid.num), pHdl);
             N2.SetPage(pHdl);
-            fHandler->ReturnWhole(N.bid.num);
 
             DeleteEntry(P, k2, RM_Rid(N.GetBlkNum(), 0));
-
+            fHandler->ReturnWhole(N.bid.num);
+            
+            /*
             switch (attrType)
             {
             case DB_INT:
@@ -605,23 +649,49 @@ RC IM_IdxHandler::DeleteEntry(BTreeNode &N, void *pData, const RM_Rid &rid)
                 delete (bool *)k2;
                 break;
             }
+            */
+            
             return SUCCESS;
         }
         else
         {
             //重新分布
+            //std::cout<<"borrow"<<std::endl;
             if (isLeft) {
+                //std::cout<<"borrow from left"<<std::endl;
                 if (!N.isLeaf()) {
+                    //std::cout<<"borrow from left non-leaf"<<std::endl;
                     RM_Rid pm = N2.Ptrs.back();
                     void* km_1 = N2.keys.back();
                     N2.Ptrs.pop_back();
                     N2.keys.pop_back();
-                    N.keys.push_front(k2);
+                    void *kn = nullptr;
+                    switch(attrType) {
+                    case DB_INT:
+                        kn = new int;
+                        memcpy(kn, k2, sizeof(int));
+                        break;
+                    case DB_DOUBLE:
+                        kn = new double;
+                        memcpy(kn, k2, sizeof(double));
+                        break;
+                    case DB_STRING:
+                        kn = new char[attrLen];
+                        strcpy((char*)kn, (char*)k2);
+                        break;
+                    case DB_BOOL:
+                        kn = new bool;
+                        memcpy(kn, k2, sizeof(bool));
+                        break;
+                    }
+                    N.keys.push_front(kn);
                     N.Ptrs.push_front(pm);
                     P.ReplaceKey(k2, km_1);
+                    //TODO delete k2
                 }else {
                     auto iter = N2.Ptrs.rbegin();
-                    iter++;
+                    if (N2.Ptrs.size() == N2.keys.size() + 1)
+                        iter++;
                     RM_Rid pm = *iter;
                     void* km = N2.keys.back();
                     iter++;
@@ -629,7 +699,26 @@ RC IM_IdxHandler::DeleteEntry(BTreeNode &N, void *pData, const RM_Rid &rid)
                     N2.keys.pop_back();
                     N.keys.push_front(km);
                     N.Ptrs.push_front(pm);
-                    P.ReplaceKey(k2, km);
+                    void *kt = nullptr;
+                    switch(attrType) {
+                    case DB_INT:
+                        kt = new int;
+                        memcpy(kt, km, sizeof(int));
+                        break;
+                    case DB_DOUBLE:
+                        kt = new double;
+                        memcpy(kt, km, sizeof(double));
+                        break;
+                    case DB_STRING:
+                        kt = new char[attrLen];
+                        strcpy((char*)kt, (char*)km);
+                        break;
+                    case DB_BOOL:
+                        kt = new bool;
+                        memcpy(kt, km, sizeof(bool));
+                        break;
+                    }
+                    P.ReplaceKey(k2, kt);
                 }
                 gBuffer->GetPage(FM_Bid(fHandler->GetFd(), P.GetBlkNum()), pHdl);
                 P.SetPage(pHdl);
@@ -644,7 +733,26 @@ RC IM_IdxHandler::DeleteEntry(BTreeNode &N, void *pData, const RM_Rid &rid)
                     void* km_1 = N2.keys.front();
                     N2.Ptrs.pop_front();
                     N2.keys.pop_front();
-                    N.keys.push_back(k2);
+                    void* kn = nullptr;
+                    switch(attrType) {
+                    case DB_INT:
+                        kn = new int;
+                        memcpy(kn, k2, sizeof(int));
+                        break;
+                    case DB_DOUBLE:
+                        kn = new double;
+                        memcpy(kn, k2, sizeof(double));
+                        break;
+                    case DB_STRING:
+                        kn = new char[attrLen];
+                        strcpy((char*)kn, (char*)k2);
+                        break;
+                    case DB_BOOL:
+                        kn = new bool;
+                        memcpy(kn, k2, sizeof(bool));
+                        break;
+                    }
+                    N.keys.push_back(kn);
                     N.Ptrs.push_back(pm);
                     P.ReplaceKey(k2, km_1);
 
@@ -653,9 +761,34 @@ RC IM_IdxHandler::DeleteEntry(BTreeNode &N, void *pData, const RM_Rid &rid)
                     void* km = N2.keys.front();
                     N2.Ptrs.pop_front();
                     N2.keys.pop_front();
+                    if (N.keys.size() == N.Ptrs.size())
+                        N.Ptrs.push_back(pm);
+                    else {
+                        auto tmp = N.Ptrs.back();
+                        N.Ptrs.pop_back();
+                        N.Ptrs.push_back(pm), N.Ptrs.push_back(tmp);
+                    }
                     N.keys.push_back(km);
-                    N.Ptrs.push_back(pm);
-                    P.ReplaceKey(k2, km);
+                    void *kt = nullptr;
+                    switch(attrType) {
+                    case DB_INT:
+                        kt = new int;
+                        memcpy(kt, km, sizeof(int));
+                        break;
+                    case DB_DOUBLE:
+                        kt = new double;
+                        memcpy(kt, km, sizeof(double));
+                        break;
+                    case DB_STRING:
+                        kt = new char[attrLen];
+                        strcpy((char*)kt, (char*)km);
+                        break;
+                    case DB_BOOL:
+                        kt = new bool;
+                        memcpy(kt, km, sizeof(bool));
+                        break;
+                    }
+                    P.ReplaceKey(k2, kt);
                } 
                 gBuffer->GetPage(FM_Bid(fHandler->GetFd(), P.GetBlkNum()), pHdl);
                 P.SetPage(pHdl);
@@ -708,7 +841,7 @@ RC IM_IdxHandler::Traverse() {
     int s = GetFirstLeaf(L);
     if (s != SUCCESS)
         return s;
-    //printf("Last Leaf %d-----%d %d\n", L.bid.num, L.Ptrs.size(), L.keys.size());
+    //printf("First Leaf %d-----%d %d\n", L.bid.num, L.Ptrs.size(), L.keys.size());
     //return SUCCESS;
     MM_PageHandler pHdl;
     int i = 0;

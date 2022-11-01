@@ -148,10 +148,10 @@ RC BTreeNode::SetData(const MM_PageHandler& pHdl) {
     memcpy(&rid, ptr, sizeof(RM_Rid));
     Ptrs.push_back(rid);
     ptr += sizeof(RM_Rid);
-    void* tp;
+    void* tp = nullptr;
     int pCnt = 1;
-    //std::cout<<"22223"<<std::endl;
-    for (int i = 0; i < pHdr.firstHole; ++i, pCnt++) {
+    //std::cout<<pHdr.firstHole<<" "<<pHdr.freeBtsCnt<<std::endl;
+    for (int i = 0; i < pHdr.firstHole; ++i) {
         switch(attrType) {
             case DB_INT:
                 tp = new int;
@@ -164,8 +164,9 @@ RC BTreeNode::SetData(const MM_PageHandler& pHdl) {
                 keys.push_back(tp);
                 break;
             case DB_STRING:
+                //std::cout<<"sfadvdasf "<<std::endl;
                 tp = new char[attrLen];
-                strcpy((char*)tp, (char*)ptr);
+                memcpy(tp, ptr, attrLen);
                 keys.push_back(tp);
                 break;
             case DB_BOOL:
@@ -175,10 +176,13 @@ RC BTreeNode::SetData(const MM_PageHandler& pHdl) {
                 break;
         }
         ptr += attrLen;
+        //std::cout<<attrLen<<" "<<ptr - pHdl.GetPtr(GetStartOff())<<std::endl;
         if (pCnt < pHdr.freeBtsCnt) {
             memcpy(&rid, ptr, sizeof(RM_Rid));
             Ptrs.push_back(rid);
             ptr += sizeof(RM_Rid);
+            pCnt++;
+            //std::cout<<"2 "<<pCnt<<std::endl;
         }
     }
     
@@ -221,7 +225,8 @@ RC BTreeNode::SetPage(MM_PageHandler& pHdl) {
     RM_RecHdr rHdr;
     rHdr.isDeleted = false;
     rHdr.len = sizeof(RM_Rid) + attrLen;
-    rHdr.off = preLen + sizeof(RM_Rid);
+    //rHdr.off = preLen + sizeof(RM_Rid);
+    rHdr.off = preLen;
     auto ip = keys.begin();
     auto jp = Ptrs.begin(); jp ++;
     for (int i = 0; i < keys.size(); ++i) {
@@ -517,10 +522,12 @@ std::pair<void*, RM_Rid> BTreeNode::GetRightBro(const RM_Rid& ptr) {
         return INVALID_OPTR;
     for (auto i = keys.begin(); i != keys.end(); ++i) {
         if (src == *i) {
-            src = tar;
+            //std::cout << "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG\n";
+            *i = tar;
             return SUCCESS;
         }
     }
+    std::cout << "Fail To Replace Key: Not Found";
     return NOT_EXIST;
  }
 
