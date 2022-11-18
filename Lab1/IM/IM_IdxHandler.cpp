@@ -6,6 +6,7 @@
 #include "RM/RM_TableHandler.h"
 #include "RM/RM_TblIterator.h"
 #include "MM/MM_PageHeader.h"
+#include "IM_IdxIterator.h"
 #include "BTreeNode.h"
 #include "main.h"
 #include <tuple>
@@ -32,7 +33,7 @@ RC IM_IdxHandler::OpenIdx(const char *idxPath)
         fHandler = new FM_FileHandler;
     }
     isChanged = false;
-
+    this->idxPath = idxPath;
     int status = fM_Manager->OpenFile(idxPath, *fHandler);
     auto names = GetIdxName(idxPath);
     //获取索引字段元信息
@@ -62,6 +63,7 @@ RC IM_IdxHandler::OpenIdx(const char *idxPath)
         std::cout << "Index Not Exist\n";
         return NOT_EXIST;
     }
+    colPos = std::get<2>(names);
     rec.GetColData(tblHdl.GetMeta(), 3, &attrType);
     switch (attrType)
     {
@@ -876,3 +878,47 @@ RC IM_IdxHandler::UpdateEntry(void *pData, const RM_Rid &rid, void*nData, const 
     }
     return InsertEntry(nData, nRid);
 }
+
+RC IM_IdxHandler::GetQueryLeaf(void* pData, BTreeNode& L) {
+    FM_FileHdr fHdr = fHandler->GetFileHdr();
+    MM_PageHandler pHdl;
+    gBuffer->GetPage(FM_Bid(fHandler->GetFd(), fHdr.preF), pHdl);
+    L.SetData(pHdl);
+    RM_Rid nex = L.GetFirstSon(pData);
+    //std::cout<<nex.num<<std::endl;
+    /*
+    printf("head %d\n", L.bid.num);
+    printf("total blk num %d\n", fHdr.blkCnt);
+    for (auto i : L.keys) {
+        printf("root %s\n", i);
+    }
+    */
+    int pNum = L.bid.num;
+    while (nex.num != -1)
+    {
+        gBuffer->GetPage(FM_Bid(fHandler->GetFd(), nex.num), pHdl);
+        L.SetData(pHdl);
+        L.pHdr.preFreePage = pNum;
+        L.SetPage(pHdl);
+        pNum = L.bid.num;
+        nex = L.GetFirstSon(pData);
+    }
+    // std::cout<<"ggg"<<std::endl;
+    return SUCCESS;
+}
+
+RC IM_IdxHandler::GetNextLeaf(BTreeNode& L) {
+    if (L.GetKeyNum() == L.GetPtrNum())
+        return SUCCESS;
+    FM_FileHdr fHdr = fHandler->GetFileHdr();
+    MM_PageHandler pHdl;
+    gBuffer->GetPage(FM_Bid(fHandler->GetFd(), L.Ptrs.back().num), pHdl);
+    return L.SetData(pHdl);
+}
+
+RC IM_IdxHandler::GetIter(IM_IdxIterator& iter) {
+    iter.SetIdxHandler(*this);
+    iter.Reset();
+    return SUCCESS;
+}
+

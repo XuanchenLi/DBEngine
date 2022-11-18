@@ -15,6 +15,7 @@
 class BTreeNode {
 public:
     friend class IM_IdxHandler;
+    //friend class IM_IdxIterator;
     BTreeNode(dbType attrType, int attrLen);
     BTreeNode& operator=(const BTreeNode& oth);
     BTreeNode(const BTreeNode& oth);
@@ -36,11 +37,30 @@ public:
     std::pair<void*, RM_Rid> GetRightBro(const RM_Rid& ptr);
     int GetMaxPNum()const {return pHdr.slotCnt;}
     int GetKeyNum() const {return keys.size();}
+    int GetPtrNum() const {return Ptrs.size();}
     int GetBlkNum() const {return bid.num;}
     bool isRoot() const {return pHdr.preFreePage == 0;}
     bool isLeaf() const {return pHdr.nextFreePage == -1;}
     int GetParent() const {return pHdr.preFreePage;}
     bool Contain(void* key, const RM_Rid& ptr);
+    void* GetKey(int i) {
+        if (i >= keys.size())
+            return nullptr;
+        auto p = keys.begin();
+        while (i--) {
+            p++;
+        }
+        return *p;
+    }
+    RM_Rid GetPtr(int i) {
+        if (i >= Ptrs.size())
+            return RM_Rid();
+        auto p = Ptrs.begin();
+        while (i--) {
+            p++;
+        }
+        return *p;
+    }
     RC Clear();
 private:
     bool Less(const void*, const void*) const;

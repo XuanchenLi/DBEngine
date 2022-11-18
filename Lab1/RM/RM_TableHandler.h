@@ -13,10 +13,12 @@
 struct RM_Rid;
 class FM_FileHandler;
 class RM_TblIterator;
+//class IM_IdxIterator;
 struct RM_RecAux;
 
 class RM_TableHandler {
 friend class RM_TblIterator;
+//friend class IM_IdxIterator;
 
 public:
     ~RM_TableHandler();
@@ -47,6 +49,9 @@ public:
     RC GetRec(const RM_Rid&, RM_Record&);
     RC GetIter(RM_TblIterator& iter);
     RC InsertRec(const RM_RecAux&);
+    int GetFd()const {return fHandler->GetFd();}
+    FM_FileHdr GetFileHdr()const {return fHandler->GetFileHdr();}
+
     const RM_TblMeta& GetMeta() const {
         return metaData;
     }

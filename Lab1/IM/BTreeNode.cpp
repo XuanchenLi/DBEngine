@@ -126,6 +126,7 @@ RC BTreeNode::Clear() {
     EraseNPair(keys.size());
     Ptrs.clear();
     pHdr = MM_PageHdr();
+    return SUCCESS;
 }
 RC BTreeNode::SetData(const MM_PageHandler& pHdl) {
     //std::cout<<"22223"<<std::endl;

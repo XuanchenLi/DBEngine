@@ -5,10 +5,13 @@
 #include "utils/DBType.h"
 #include "FM/FM_FileHandler.h"
 #include "RM/RM_Rid.h"
+#include <string>
 
 class BTreeNode;
+class IM_IdxIterator;
 class IM_IdxHandler {
 public: 
+    //friend class IM_IdxIterator;
     ~IM_IdxHandler();
     IM_IdxHandler():isChanged(false), fHandler(nullptr){}
     IM_IdxHandler(const char* idxPath);
@@ -22,6 +25,7 @@ public:
         isChanged = other.isChanged;
         attrType = other.attrType;
         attrLen = other.attrLen;
+        colPos = other.colPos;
         //maxPtrNum = other.maxPtrNum;
         return *this;
         //r.fHandler = nullptr;
@@ -32,6 +36,7 @@ public:
         isChanged = other.isChanged;
         attrType = other.attrType;
         attrLen = other.attrLen;
+        colPos = other.colPos;
         //maxPtrNum = other.maxPtrNum;
     }
 
@@ -43,11 +48,14 @@ public:
     RC CloseIdx();    
     dbType GetType() const {return attrType;}
     int GetLen() const {return attrLen;}     
-    RC Traverse();              
-
-private:
+    RC Traverse();
     RC GetFirstLeaf(BTreeNode& L);
-    RC GetLastLeaf(BTreeNode& L);
+    RC GetLastLeaf(BTreeNode& L); 
+    RC GetQueryLeaf(void* pData, BTreeNode& L);    
+    RC GetNextLeaf(BTreeNode& L);         
+    std::string GetIdxPath() const {return idxPath;}
+    RC GetIter(IM_IdxIterator& iter);
+private:
     RC FindInsertPos(void* pData, BTreeNode& L);
     RC DeleteEntry(BTreeNode& L, void *pData, const RM_Rid &rid);  
     RC FindLeaf(void* pData, const RM_Rid &rid, BTreeNode& L);
@@ -56,7 +64,9 @@ private:
     bool isChanged;
     FM_FileHandler* fHandler;
     dbType attrType;
+    std::string idxPath;
     int attrLen;
+    int colPos;
     //int maxPtrNum;  // n
 };
 
