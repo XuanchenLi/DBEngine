@@ -25,6 +25,7 @@ public:
         isChanged = other.isChanged;
         attrType = other.attrType;
         attrLen = other.attrLen;
+        idxPath = other.idxPath;
         colPos = other.colPos;
         //maxPtrNum = other.maxPtrNum;
         return *this;
@@ -37,6 +38,7 @@ public:
         attrType = other.attrType;
         attrLen = other.attrLen;
         colPos = other.colPos;
+        idxPath = other.idxPath;
         //maxPtrNum = other.maxPtrNum;
     }
 

@@ -26,6 +26,7 @@ RM_Record RM_TblIterator::NextRec() {
     //td::cout<<tHandler.fHandler->GetBlockNum()<<std::endl;
     if (tHandler.fHandler->GetBlockNum() <= curPNum)
     {
+        //std::cout<<"block out of range " << tHandler.fHandler->GetBlockNum()<<std::endl;
         return res;
     }
     MM_PageHandler pHdr;

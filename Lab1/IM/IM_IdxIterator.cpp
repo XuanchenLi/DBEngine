@@ -45,7 +45,7 @@ void IM_IdxIterator::StandardizeLimits() {
         opts[NOT_GREATER - 1].push_back(t);
     }
     if (!opts[LESS - 1].empty() && !opts[NOT_GREATER - 1].empty()) {
-        if (comp(opts[LESS - 1][0].type, NOT_GREATER, &opts[LESS - 1][0], &opts[NOT_GREATER - 1][0])) {
+        if (comp(opts[LESS - 1][0].type, NOT_GREATER, &opts[LESS - 1][0].data.sData, &opts[NOT_GREATER - 1][0].data.sData)) {
             opts[NOT_GREATER - 1].clear();
         }
         else {
@@ -53,32 +53,51 @@ void IM_IdxIterator::StandardizeLimits() {
         }
     }
     if (!opts[GREATER - 1].empty() && !opts[NOT_LESS - 1].empty()) {
-        if (comp(opts[GREATER - 1][0].type, NOT_LESS, &opts[GREATER - 1][0], &opts[NOT_LESS - 1][0])) {
+        if (comp(opts[GREATER - 1][0].type, NOT_LESS, &opts[GREATER - 1][0].data.sData, &opts[NOT_LESS - 1][0].data.sData)) {
             opts[NOT_LESS - 1].clear();
         }
         else {
             opts[GREATER - 1].clear();
         }
     }
-    if (!opts[EQUAL - 1].empty() && !opts[NOT_EQUAL - 1].empty() && comp(opts[EQUAL - 1][0].type, EQUAL, &opts[EQUAL - 1][0], &opts[NOT_EQUAL - 1][0])) {
+    if (!opts[EQUAL - 1].empty() && !opts[NOT_EQUAL - 1].empty() && comp(opts[EQUAL - 1][0].type, EQUAL, &opts[EQUAL - 1][0].data.sData, &opts[NOT_EQUAL - 1][0].data.sData)) {
         conflict = true;
         return;
     }
-    if (!opts[LESS - 1].empty() && !opts[GREATER - 1].empty() && comp(opts[LESS - 1][0].type, NOT_GREATER, &opts[LESS - 1][0], &opts[GREATER - 1][0])) {
+    if (!opts[LESS - 1].empty() && !opts[GREATER - 1].empty() && comp(opts[LESS - 1][0].type, NOT_GREATER, &opts[LESS - 1][0].data.sData, &opts[GREATER - 1][0].data.sData)) {
         conflict = true;
         return;
     }
-    if (!opts[LESS - 1].empty() && !opts[NOT_LESS - 1].empty() && comp(opts[LESS - 1][0].type, NOT_GREATER, &opts[LESS - 1][0], &opts[NOT_LESS - 1][0])) {
+    if (!opts[LESS - 1].empty() && !opts[NOT_LESS - 1].empty() && comp(opts[LESS - 1][0].type, NOT_GREATER, &opts[LESS - 1][0].data.sData, &opts[NOT_LESS - 1][0].data.sData)) {
         conflict = true;
         return;
     }
-    if (!opts[NOT_GREATER - 1].empty() && !opts[GREATER - 1].empty() && comp(opts[NOT_GREATER - 1][0].type, NOT_GREATER, &opts[NOT_GREATER - 1][0], &opts[GREATER - 1][0])) {
+    if (!opts[NOT_GREATER - 1].empty() && !opts[GREATER - 1].empty() && comp(opts[NOT_GREATER - 1][0].type, NOT_GREATER, &opts[NOT_GREATER - 1][0].data.sData, &opts[GREATER - 1][0].data.sData)) {
         conflict = true;
         return;
     }
-    if (!opts[NOT_GREATER - 1].empty() && !opts[NOT_LESS - 1].empty() && comp(opts[NOT_GREATER - 1][0].type, LESS, &opts[NOT_GREATER - 1][0], &opts[NOT_LESS - 1][0])) {
+    if (!opts[NOT_GREATER - 1].empty() && !opts[NOT_LESS - 1].empty() && comp(opts[NOT_GREATER - 1][0].type, LESS, &opts[NOT_GREATER - 1][0].data.sData, &opts[NOT_LESS - 1][0].data.sData)) {
         conflict = true;
         return;
+    }
+    if (!opts[EQUAL - 1].empty()) {
+        auto t = opts[EQUAL - 1][0].type;
+        if (!opts[NOT_LESS - 1].empty() && comp(t, LESS, &opts[EQUAL - 1][0].data.sData, &opts[NOT_LESS - 1][0].data.sData)) {
+            conflict = true;
+            return;
+        }
+        if (!opts[GREATER - 1].empty() && comp(t, NOT_GREATER, &opts[EQUAL - 1][0].data.sData, &opts[GREATER - 1][0].data.sData)) {
+            conflict = true;
+            return;
+        }
+        if (!opts[LESS - 1].empty() && comp(t, NOT_LESS, &opts[EQUAL - 1][0].data.sData, &opts[LESS - 1][0].data.sData)) {
+            conflict = true;
+            return;
+        }
+        if (!opts[NOT_GREATER - 1].empty() && comp(t, GREATER, &opts[EQUAL - 1][0].data.sData, &opts[NOT_GREATER - 1][0].data.sData)) {
+            conflict = true;
+            return;
+        }
     }
     limits.clear();
     for (int i = 0; i < 6; ++i) {
@@ -90,24 +109,41 @@ void IM_IdxIterator::StandardizeLimits() {
 
 RC IM_IdxIterator::Reset() {
     done = false;
-    int gtOptIdx = -1, nlOptIdx = -1;
+    gtOptIdx = -1, nlOptIdx = -1, eqOptIdx = -1, lOptIdx = -1, ngOptIdx = -1;
     for (int i = 0; i < limits.size(); ++i) {
         if (limits[i].optr == GREATER) {
             gtOptIdx = i;
         }
         else if (limits[i].optr == NOT_LESS) {
             nlOptIdx = i;
+        }else if (limits[i].optr == EQUAL) {
+            //printf("sasdas\n");
+            eqOptIdx = i;
+        }else if (limits[i].optr == LESS) {
+            lOptIdx = i;
+        }else if (limits[i].optr == NOT_GREATER) {
+            ngOptIdx = i;
         }
     }
-    if (gtOptIdx != -1 || nlOptIdx != -1) {
+    if (eqOptIdx != -1) {
+        idxHandler.GetQueryLeaf(limits[eqOptIdx].data.sData ,curLeaf);
+    }
+    else if (gtOptIdx != -1 || nlOptIdx != -1) {
         int idx = gtOptIdx;
         if (idx == -1)
             idx = nlOptIdx;
         idxHandler.GetQueryLeaf(limits[idx].data.sData ,curLeaf);
-        while(true) {
+
+    }else {
+        idxHandler.GetFirstLeaf(curLeaf);
+        
+    }
+    curSlot = 0;
+    while(true) {
             for (int i = 0; i < curLeaf.GetKeyNum(); ++i) {
                 bool flag = true;
                 for (auto it : limits) {
+                    //printf("fasf\n");
                     if (!it.test(curLeaf.GetKey(i))) {
                         flag = false;
                         break;
@@ -123,13 +159,20 @@ RC IM_IdxIterator::Reset() {
                 return SUCCESS;
             }else {
                 idxHandler.GetNextLeaf(curLeaf);
+                curSlot = 0;
+                if (eqOptIdx != -1 && comp(attrType, LESS, limits[eqOptIdx].data.sData, curLeaf.GetKey(0))) {
+                    done = true;
+                    return SUCCESS;
+                }else if (lOptIdx != -1 && comp(attrType, NOT_GREATER, limits[lOptIdx].data.sData, curLeaf.GetKey(0))) {
+                    done = true;
+                    return SUCCESS;
+                }else if (ngOptIdx != -1 && comp(attrType, LESS, limits[ngOptIdx].data.sData, curLeaf.GetKey(0))) {
+                    done = true;
+                    return SUCCESS;
+                }
+
             }
         }
-
-    }else {
-        idxHandler.GetFirstLeaf(curLeaf);
-        curSlot = 0;
-    }
     return SUCCESS;
 }
 
@@ -148,15 +191,32 @@ std::pair<void*, RM_Rid> IM_IdxIterator::NextPair() {
                     }
                 }
                 if (flag) {
+                    for (int k = 0; k < curLeaf.GetPtrNum(); ++k) {
+                        //std::cout<<curLeaf.GetPtr(k).num<<std::endl;
+                    }
+                    //std::cout<<res.second.num<<std::endl;
                     curSlot = i;
                     return res;
                 }
             }
             if (curLeaf.GetKeyNum() == curLeaf.GetPtrNum()) {
+                //printf("done\n");
                 done = true;
                 break;
             }else {
                 idxHandler.GetNextLeaf(curLeaf);
+                curSlot = 0;
+                if (eqOptIdx != -1 && comp(attrType, LESS, limits[eqOptIdx].data.sData, curLeaf.GetKey(0))) {
+                    //printf("asd\n");
+                    done = true;
+                    break;
+                }else if (lOptIdx != -1 && comp(attrType, NOT_GREATER, limits[lOptIdx].data.sData, curLeaf.GetKey(0))) {
+                    done = true;
+                    break;
+                }else if (ngOptIdx != -1 && comp(attrType, LESS, limits[ngOptIdx].data.sData, curLeaf.GetKey(0))) {
+                    done = true;
+                    break;
+                }
             }
         }
     return res;
@@ -167,22 +227,26 @@ RM_Record IM_IdxIterator::NextRec() {
     res.rid.num = -1;
     auto pr = NextPair();
     if (pr.first == nullptr) {
+        std::cout<<"null pointer\n";
         return res;
     }
 
     std::string path = idxHandler.GetIdxPath();
+    //std::cout<<path<<std::endl;
     if (path[path.length() - 1] == '/') {
         path = path.substr(0, path.length() - 1);
     }  
     //std::cout<<tmp<<std::endl;
-    int idx = path.find_last_of('/');
+    int idx = path.find_last_of('_');
     if (idx != std::string::npos) {
         path = path.substr(0, idx);
     }
     RM_TableHandler tHandler(path.c_str());
+    //std::cout<<path<<std::endl;
  
     if (tHandler.GetFileHdr().blkCnt <= pr.second.num)
     {
+        std::cout<<"block " << pr.second.num <<" out of range "<<tHandler.GetFileHdr().blkCnt<<std::endl;
         return res;
     }
     res.rid = pr.second;

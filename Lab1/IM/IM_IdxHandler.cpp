@@ -917,6 +917,7 @@ RC IM_IdxHandler::GetNextLeaf(BTreeNode& L) {
 }
 
 RC IM_IdxHandler::GetIter(IM_IdxIterator& iter) {
+    iter.SetTypeLen(attrType, attrLen);
     iter.SetIdxHandler(*this);
     iter.Reset();
     return SUCCESS;

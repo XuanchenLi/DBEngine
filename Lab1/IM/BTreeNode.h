@@ -20,7 +20,7 @@ public:
     BTreeNode& operator=(const BTreeNode& oth);
     BTreeNode(const BTreeNode& oth);
     ~BTreeNode(); 
-
+    void SetTypeLen(dbType t, int len){attrType = t; attrLen = len;}
     RC SetData(const MM_PageHandler & pHdl);
     RC InitHead();
     RC SetPage(MM_PageHandler& pHdl);
@@ -47,8 +47,9 @@ public:
         if (i >= keys.size())
             return nullptr;
         auto p = keys.begin();
-        while (i--) {
+        while (i) {
             p++;
+            i--;
         }
         return *p;
     }
@@ -56,8 +57,9 @@ public:
         if (i >= Ptrs.size())
             return RM_Rid();
         auto p = Ptrs.begin();
-        while (i--) {
+        while (i) {
             p++;
+            i--;
         }
         return *p;
     }

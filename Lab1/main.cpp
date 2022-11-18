@@ -7,6 +7,7 @@
 #include "RM/RM_TblIterator.h"
 #include "main.h"
 #include "IM/IM_Manager.h"
+#include "IM/IM_IdxIterator.h"
 #include "MM/MM_Buffer.h"
 #include "RM/RM_TblMeta.h"
 #include "RM/RM_TableHandler.h"
@@ -33,6 +34,7 @@ void dbClear();
 void dbInit(int argc, char* argv[]);
 void task1();
 void task3();
+void task4();
 
 
 int main(int argc, char* argv[]) {
@@ -45,6 +47,7 @@ int main(int argc, char* argv[]) {
     //----------------------------------
     task1(); 
     task3();
+    task4();
     //----------------------------------
     dbClear();
 
@@ -397,6 +400,7 @@ void task1() {
             std::make_pair<std::string, double>("balance", rand() % 100000)
         );
         tblHandler.InsertRec(rAux);
+        //std::cout<<tblHandler.GetFileHdr().blkCnt<<std::endl;
     }
     
     
@@ -404,7 +408,7 @@ void task1() {
     RM_TblIterator iter;
     strcpy(accNum.msg, "accNum");
     strcpy(branchName.msg, "branchName");
-    printf("%s %s %s\n", accNum.msg, branchName.msg, "balance");
+    //printf("%s %s %s\n", accNum.msg, branchName.msg, "balance");
     tuple<SString<10>, SString<30>, double> item;
 
     RM_Record rec;
@@ -419,9 +423,9 @@ void task1() {
         rec.GetColData(tblHandler.GetMeta(), 0, tStr1);
         rec.GetColData(tblHandler.GetMeta(), 1, tStr2);
         rec.GetColData(tblHandler.GetMeta(), 2, &tLf);
-        printf("%s %s %lf\n", tStr1, tStr2, tLf);
+        //printf("%s %s %lf\n", tStr1, tStr2, tLf);
     }while(true);
-    
+    //std::cout<<tblHandler.GetFileHdr().blkCnt<<std::endl;
     tblHandler.CloseTbl();
 }
 
@@ -429,7 +433,45 @@ void task3() {
     IM_Manager iManager;
     iManager.CreateIndex((WORK_DIR + "account").c_str(), 0);
     //iManager.TraverseLeaf((WORK_DIR + "account").c_str(), 0);
-    iManager.ClearIndex((WORK_DIR + "account").c_str(), 0);
-    iManager.TraverseLeaf((WORK_DIR + "account").c_str(), 0);
+    //iManager.ClearIndex((WORK_DIR + "account").c_str(), 0);
+    //iManager.TraverseLeaf((WORK_DIR + "account").c_str(), 0);
+}
+
+void task4() {
+    //printf("task4\n");
+    IM_Manager iManager;
+    IM_IdxHandler iHdl;
+    RM_TableHandler tHandler((WORK_DIR + "account").c_str());
+    //std::cout<<tHandler.GetFileHdr().blkCnt<<std::endl;
+    iManager.OpenIndex((WORK_DIR + "account").c_str(), 0, iHdl);
+    IM_IdxIterator iter(iHdl.GetType(), iHdl.GetLen());
+    /*
+    std::vector<DB_NumOpt> lims;
+    DB_NumOpt opt;
+    opt.colPos = 0, opt.type = iHdl.GetType();
+    opt.optr = NOT_LESS;
+    strcpy(opt.data.sData, "A-699");
+    lims.push_back(opt);
+    opt.optr = LESS;
+    strcpy(opt.data.sData, "A-700");
+    lims.push_back(opt);
+    iter.SetLimits(lims);
+    */
+    iHdl.GetIter(iter);
+    char tStr1[64];
+    char tStr2[64];
+    double tLf;
+    
+    while(iter.HasNext()) {
+        auto rec = iter.NextRec();
+        rec.GetColData(tHandler.GetMeta(), 0, tStr1);
+        rec.GetColData(tHandler.GetMeta(), 1, tStr2);
+        rec.GetColData(tHandler.GetMeta(), 2, &tLf);
+        printf("%s %s %lf\n", tStr1, tStr2, tLf);
+    }
+    
+    //iManager.TraverseLeaf((WORK_DIR + "account").c_str(), 0);
+    //iManager.ClearIndex((WORK_DIR + "account").c_str(), 0);
+    //iManager.TraverseLeaf((WORK_DIR + "account").c_str(), 0);
 }
 

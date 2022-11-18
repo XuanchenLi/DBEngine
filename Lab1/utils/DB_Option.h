@@ -7,6 +7,9 @@
 #include "utils/Optrs.h"
 #include "utils/DBType.h"
 
+extern bool comp(dbType type, db_optr optr,const void* lhs,const void*rhs);
+
+
 typedef struct DB_Option {
     db_optr optr;
     std::string colName;
@@ -35,6 +38,9 @@ public:
         if (rhs.optr != optr)
             return optr<rhs.optr;
         return comp(type, LESS, (void*)&data.sData, (void*)&rhs.data.sData);
+    }
+    bool operator==(const DB_NumericOption& rhs) const {
+        return rhs.optr == optr && comp(type, EQUAL, (void*)&data.sData, (void*)&rhs.data.sData);
     }
     bool test(const void* ptr) const {
         return comp(type, optr, ptr, data.sData);
@@ -74,19 +80,6 @@ typedef struct DB_NumericCondition {
     }data;
 }DB_NumCond;
 
-
-DB_Opt TransToOpt(DB_Cond cond) {
-    DB_Opt opt;
-    if (!cond.isConst) {
-        printf("Bad Transform!\n");
-        return opt;
-    }
-    opt.optr = cond.optr;
-    opt.type = cond.type;
-    opt.colName = cond.lColName;
-    memcpy(&opt.data, &cond.data, sizeof(cond.data));
-    return opt;
-}
 
 
 #endif
