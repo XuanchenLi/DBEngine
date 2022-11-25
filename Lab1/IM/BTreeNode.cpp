@@ -202,6 +202,16 @@ bool BTreeNode::Contain(void* key, const RM_Rid& ptr) {
     return true;
 }
 
+bool BTreeNode::ContainKey(void* key) {
+    if (this->keys.empty()) return false;
+    auto iter1 = keys.begin();
+    while (iter1 != keys.end() && (!Equal((*iter1), key) )) iter1++;
+    
+    
+    if (iter1 == keys.end()) return false;
+    return true;
+}
+
 
 RC BTreeNode::SetPage(MM_PageHandler& pHdl) {
     // 假设pHdl已经指向一个缓冲区

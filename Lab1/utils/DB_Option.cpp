@@ -10,6 +10,6 @@ DB_Opt TransToOpt(DB_Cond cond) {
     opt.optr = cond.optr;
     opt.type = cond.type;
     opt.colName = cond.lColName;
-    memcpy(&opt.data, &cond.data, sizeof(cond.data));
+    memcpy(&opt.data.sData, &cond.data.sData, sizeof(cond.data));
     return opt;
 }

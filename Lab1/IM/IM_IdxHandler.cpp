@@ -146,29 +146,16 @@ RC IM_IdxHandler::FindLeaf(void *pData, const RM_Rid &rid, BTreeNode &L)
         L.SetPage(pHdl);
         pNum = L.bid.num;
         nex = L.GetFirstSon(pData);
-        //std::cout<< nex.num<<std::endl;
     }
-    /*
-    if (!L.Contain(pData, rid)) {
-        printf("query %s %d %d\n", pData, rid.num, rid.slot);
-        auto j = L.Ptrs.begin();
-        for (auto i : L.keys) {
-            printf("keys %s--------rid %d %d\n", i, (*j).num, (*j).slot);
-            j++;
-        }
-    }
-    */
-        
-    //std::cout<<L.bid.num<<std::endl;
-    //return NOT_EXIST;
-    //std::cout<<L.GetBlkNum()<<std::endl;
+
     while (true)
     {
-
-        //printf("query %s\n", pData);
         /*
-        for (auto i : L.keys) {
-            printf("keys %s\n", i);
+        auto j = L.Ptrs.begin();
+        printf("----%s in leaf %d----\n", pData, L.bid.num);
+        for (auto key: L.keys) {
+            printf("key %s ----- ptr %d %d\n", key, (*j).num, (*j).slot);
+            j++;
         }
         */
         if (L.Contain(pData, rid))
@@ -180,6 +167,8 @@ RC IM_IdxHandler::FindLeaf(void *pData, const RM_Rid &rid, BTreeNode &L)
         //std::cout<<L.Ptrs.back().num<<std::endl;
         L.SetData(pHdl);
     }
+    
+    //Traverse();
     printf("Leaf That Contain Key %s Ptr %d %d Not Exist\n", pData, rid.num, rid.slot);
     return NOT_EXIST;
 }
@@ -582,6 +571,7 @@ RC IM_IdxHandler::DeleteEntry(BTreeNode &N, void *pData, const RM_Rid &rid)
                 N2.SetData(pHdl);
             }
         }
+        //printf("%s\n", k2);
         int n1s = N.Ptrs.size();
         int n2s = N2.Ptrs.size();
         //std::cout<<"1232"<<std::endl;
@@ -757,7 +747,7 @@ RC IM_IdxHandler::DeleteEntry(BTreeNode &N, void *pData, const RM_Rid &rid)
                     N.keys.push_back(kn);
                     N.Ptrs.push_back(pm);
                     P.ReplaceKey(k2, km_1);
-
+                    
                }else {
                     RM_Rid pm = N2.Ptrs.front();
                     void* km = N2.keys.front();
@@ -771,26 +761,28 @@ RC IM_IdxHandler::DeleteEntry(BTreeNode &N, void *pData, const RM_Rid &rid)
                         N.Ptrs.push_back(pm), N.Ptrs.push_back(tmp);
                     }
                     N.keys.push_back(km);
+                    void* kk = N2.keys.front();
                     void *kt = nullptr;
                     switch(attrType) {
                     case DB_INT:
                         kt = new int;
-                        memcpy(kt, km, sizeof(int));
+                        memcpy(kt, kk, sizeof(int));
                         break;
                     case DB_DOUBLE:
                         kt = new double;
-                        memcpy(kt, km, sizeof(double));
+                        memcpy(kt, kk, sizeof(double));
                         break;
                     case DB_STRING:
                         kt = new char[attrLen];
-                        strcpy((char*)kt, (char*)km);
+                        strcpy((char*)kt, (char*)kk);
                         break;
                     case DB_BOOL:
                         kt = new bool;
-                        memcpy(kt, km, sizeof(bool));
+                        memcpy(kt, kk, sizeof(bool));
                         break;
                     }
                     P.ReplaceKey(k2, kt);
+                    //printf("%s\n", kt);
                } 
                 gBuffer->GetPage(FM_Bid(fHandler->GetFd(), P.GetBlkNum()), pHdl);
                 P.SetPage(pHdl);
@@ -919,7 +911,33 @@ RC IM_IdxHandler::GetNextLeaf(BTreeNode& L) {
 RC IM_IdxHandler::GetIter(IM_IdxIterator& iter) {
     iter.SetTypeLen(attrType, attrLen);
     iter.SetIdxHandler(*this);
-    iter.Reset();
+    //iter.Reset();
     return SUCCESS;
+}
+
+RC IM_IdxHandler::VisualizeNode() {
+    FM_FileHdr fHdr = fHandler->GetFileHdr();
+    MM_PageHandler pHdl;
+    gBuffer->GetPage(FM_Bid(fHandler->GetFd(), fHdr.preF), pHdl);
+    BTreeNode L(attrType, attrLen);
+    L.SetData(pHdl);
+    return VisualizeAux(1, L);
+}
+
+RC IM_IdxHandler::VisualizeAux(int level, BTreeNode& L) {
+    printf("|");
+    for (int i = 0; i < level; ++i) {
+        printf("————————");
+    }
+    printf("Block Id: %d  Key Number: %d  Ptr Number: %d\n", L.GetBlkNum(), L.GetKeyNum(), L.GetPtrNum());
+    if (L.isLeaf()) {return SUCCESS;}
+    FM_FileHdr fHdr = fHandler->GetFileHdr();
+    MM_PageHandler pHdl;
+    BTreeNode L2(attrType, attrLen);
+    for (int i = 0; i < L.GetPtrNum(); ++i) {
+        gBuffer->GetPage(FM_Bid(fHandler->GetFd(), L.GetPtr(i).num), pHdl);
+        L2.SetData(pHdl);
+        VisualizeAux(level + 1, L2);
+    }
 }
 

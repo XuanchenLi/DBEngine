@@ -12,6 +12,7 @@ using RC = int;
 #define UNCOMPLETE_OBJ_ERROR -5
 #define INVALID_OPTR -6
 #define OUT_OF_RANGE_ERROR -7
+#define BAD_QUERY -8
 
 
 #endif

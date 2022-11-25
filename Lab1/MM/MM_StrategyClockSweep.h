@@ -9,6 +9,9 @@ public:
     int GetVictim(std::list<int>& victimList, MM_BufferUnit* units) {
         int res = -1;
         auto it = victimList.begin();
+        if (victimList.empty()) {
+            return res;
+        }
         while(true) {
                 if (units[*it].GetUsedCnt() == 0) {
                     res = *it;

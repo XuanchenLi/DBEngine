@@ -47,9 +47,9 @@ public:
     int size() {
         return sizeof(bool) + dColNum*sizeof(posInfo) + sizeof(int);
     }
-    bool used;
-    int dColNum;
-    PosInfo* posInfo;
+    bool used;  //是否空闲
+    int dColNum;  //可变长字段数目
+    PosInfo* posInfo;  //可变长字段偏移信息
 };
 
 

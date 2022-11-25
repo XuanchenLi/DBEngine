@@ -57,7 +57,9 @@ public:
     RC GetNextLeaf(BTreeNode& L);         
     std::string GetIdxPath() const {return idxPath;}
     RC GetIter(IM_IdxIterator& iter);
+    RC VisualizeNode();
 private:
+    RC VisualizeAux(int level, BTreeNode&);
     RC FindInsertPos(void* pData, BTreeNode& L);
     RC DeleteEntry(BTreeNode& L, void *pData, const RM_Rid &rid);  
     RC FindLeaf(void* pData, const RM_Rid &rid, BTreeNode& L);

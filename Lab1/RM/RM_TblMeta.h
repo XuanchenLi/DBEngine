@@ -7,15 +7,15 @@
 #include "main.h"
 
 struct RM_TblMeta {
-    std::string dbName;
-    std::string tblName;
-    int colNum;
-    int type[MAXCOLNUM];
-    std::string colName[MAXCOLNUM];
-    bool isPrimary[MAXCOLNUM];
-    int length[MAXCOLNUM];
-    int isDynamic[MAXCOLNUM];
-    int colPos[MAXCOLNUM];
+    std::string dbName;  //数据库名
+    std::string tblName;  //表名
+    int colNum;  //记录字段数
+    dbType type[MAXCOLNUM];  //字段数据类型
+    std::string colName[MAXCOLNUM];  //字段名
+    bool isPrimary[MAXCOLNUM];  //是否主键
+    int length[MAXCOLNUM];  //字段长度
+    int isDynamic[MAXCOLNUM];  //字段是否可变长
+    int colPos[MAXCOLNUM];  //字段顺序编号
     int GetDynamicNum() const{
         int dNum = 0;
         for (int i = 0; i < colNum; ++i){
@@ -55,6 +55,7 @@ struct RM_TblMeta {
         return "";
     }
     int GetStaticPartLen() const {
+        //不包括前缀
         int res = 0;
         for (int i = 0; i < colNum; ++i) {
             if (!isDynamic[i]) {
@@ -76,8 +77,6 @@ struct RM_TblMeta {
         }
         return res;
     }
-
-    //不包括前缀
     int GetStaticPartOff(const int pos) const {
         int res = 0;
         for (int i = 0; i < colNum; ++i) {
@@ -100,9 +99,6 @@ struct RM_TblMeta {
         }
         return res;
     }
-
-    
-
 };
 
 

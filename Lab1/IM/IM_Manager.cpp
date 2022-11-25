@@ -198,3 +198,38 @@ RC IM_Manager::TraverseLeaf(const char* tblPath, int colPos) {
     iHdl.Traverse();
     return iHdl.CloseIdx();
 }
+
+RC GetAvailIndex(std::string tblName, std::vector<int>& colPoses) {
+    colPoses.clear();
+    RM_TableHandler tblHdl((DBT_DIR + IDX_DIC_NAME).c_str());
+    auto meta = tblHdl.GetMeta();
+    RM_TblIterator iter;
+    tblHdl.GetIter(iter);
+
+    std::string dbName = WORK_DIR;
+    dbName = dbName.substr(0, dbName.length() - 1);
+    dbName = dbName.substr(dbName.find_last_of('/'));
+
+    std::vector<DB_Opt> lims;
+    DB_Opt opt;
+    opt.colName = "dbName";
+    opt.optr = EQUAL;
+    opt.type = DB_STRING;
+    strcpy(opt.data.sData, dbName.c_str());
+    lims.push_back(opt);
+    opt.colName = "tblName";
+    opt.optr = EQUAL;
+    opt.type = DB_STRING;
+    strcpy(opt.data.sData, tblName.c_str());
+    lims.push_back(opt);
+    iter.SetLimits(lims);
+    auto rec = iter.NextRec();
+    while (rec.rid.num != -1) {
+        int idx;
+        rec.GetColData(meta, 2, &idx);
+        colPoses.push_back(idx);
+        rec = iter.NextRec();
+    }
+    return SUCCESS;
+
+}

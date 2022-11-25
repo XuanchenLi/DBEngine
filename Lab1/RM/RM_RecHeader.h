@@ -3,8 +3,8 @@
 
 typedef struct RM_RecHeader {
     bool isDeleted;
-    int off;
-    int len;
+    int off;  //块内偏移
+    int len;  //数据+前缀所占用长度
 }RM_RecHdr;
 
 

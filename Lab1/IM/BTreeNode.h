@@ -43,6 +43,7 @@ public:
     bool isLeaf() const {return pHdr.nextFreePage == -1;}
     int GetParent() const {return pHdr.preFreePage;}
     bool Contain(void* key, const RM_Rid& ptr);
+    bool ContainKey(void* key);
     void* GetKey(int i) {
         if (i >= keys.size())
             return nullptr;

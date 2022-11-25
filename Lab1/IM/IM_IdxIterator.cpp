@@ -5,6 +5,7 @@
 #include "FM/FM_Manager.h"
 #include "RM/RM_RecHeader.h"
 #include "RM/RM_TableHandler.h"
+#include "RM/RM_TblIterator.h"
 #include "main.h"
 
 extern FM_Manager *fM_Manager;
@@ -191,10 +192,6 @@ std::pair<void*, RM_Rid> IM_IdxIterator::NextPair() {
                     }
                 }
                 if (flag) {
-                    for (int k = 0; k < curLeaf.GetPtrNum(); ++k) {
-                        //std::cout<<curLeaf.GetPtr(k).num<<std::endl;
-                    }
-                    //std::cout<<res.second.num<<std::endl;
                     curSlot = i;
                     return res;
                 }
@@ -259,4 +256,59 @@ RM_Record IM_IdxIterator::NextRec() {
     res.addr = pHdr.GetPtr(tmpRHdr.off);
     res.InitPrefix(tHandler.GetMeta());
     return res;
+}
+
+RC IM_IdxIterator::SetLimits(const std::vector<DB_Opt>& rawLim) {
+    std::vector<DB_NumOpt> nLims;
+
+    RM_TableHandler tHdl((DBT_DIR + COL_DIC_NAME).c_str());
+    RM_TblIterator iter;
+
+    std::string dbName = WORK_DIR;
+    dbName = dbName.substr(0, dbName.length() - 1);
+    dbName = dbName.substr(dbName.find_last_of('/'));
+
+    RM_Record rec;
+    std::vector<DB_Opt> lims;
+    DB_Opt cond;
+    cond.colName = "dbName";
+    cond.optr = EQUAL;
+    cond.type = DB_STRING;
+    strcpy(cond.data.sData, dbName.c_str());
+    lims.push_back(cond);
+    cond.colName = "tblName";
+    std::string path = idxHandler.GetIdxPath();
+    //std::cout<<path<<std::endl;
+    if (path[path.length() - 1] == '/') {
+        path = path.substr(0, path.length() - 1);
+    }  
+    //std::cout<<tmp<<std::endl;
+    int idx = path.find_last_of('/');
+    if (idx != std::string::npos) {
+        path = path.substr(idx + 1);
+    }
+    strcpy(cond.data.sData, path.c_str());
+    lims.push_back(cond);
+    cond.colName = "colName";
+    DB_NumOpt opt;
+    //RM_Record rec;
+    for (auto item : rawLim) {
+        opt.optr = item.optr;
+        opt.type = item.type;
+        memcpy(&opt.data.sData, &item.data.sData, sizeof(item.data));
+        strcpy(cond.data.sData, item.colName.c_str());
+        lims.push_back(cond);
+        iter.SetLimits(lims);
+        tHdl.GetIter(iter);
+        rec = iter.NextRec();
+        if (rec.rid.num == -1) {
+            printf("Attribute Not Found.\n");
+            return false;
+        }
+        rec.GetColData(tHdl.GetMeta(), 5, &opt.colPos);
+        nLims.push_back(opt);
+        lims.pop_back();
+    }
+    return SetLimits(nLims);
+
 }

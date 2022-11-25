@@ -13,8 +13,8 @@
 struct RM_Record {
 
     RM_Rid rid;
-    RM_RecPrefix prefix;
-    char* addr;
+    RM_RecPrefix prefix;  //记录前缀
+    char* addr;  //指向缓存中的内容
     int len;
     RM_Record(){addr = nullptr;}
     
@@ -26,7 +26,6 @@ struct RM_Record {
         len = sizeof(t);
         return SUCCESS;
     }
-
     // 读取现有内容的前缀信息，而非新建
     RC InitPrefix(const RM_TblMeta& meta) {
         if (addr == nullptr)
@@ -44,8 +43,6 @@ struct RM_Record {
         //memcpy(&prefix, addr, pLen);
         return SUCCESS;
     }
-
-    //
     RC SerializeData(const RM_TblMeta& meta, const RM_RecAux& data) {
         if(addr != nullptr) {
             //!!需要防止addr此时指向缓冲区内部
@@ -125,7 +122,6 @@ struct RM_Record {
         return SUCCESS;
 
     }
-
     int GetOffset(const RM_TblMeta& meta, const int pos) const {
         if (pos >= meta.colNum)
             return OUT_OF_RANGE_ERROR;
@@ -165,9 +161,7 @@ struct RM_Record {
             }
         }
         return prefix.posInfo[preDNum];
-    }
-    
-    
+    } 
     RC GetColData(const RM_TblMeta& meta, int num, void* p) {
         if (num >= meta.colNum)
             return OUT_OF_RANGE_ERROR;
@@ -207,7 +201,6 @@ struct RM_Record {
         return SUCCESS;
 
     }
-
     bool valid(const RM_TblMeta& meta, const std::vector<DB_Opt>& lims) {
         if (lims.empty())
             return true;

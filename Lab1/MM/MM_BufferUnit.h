@@ -13,7 +13,6 @@ extern unsigned int BLOCK_SIZE;
 class MM_BufferUnit {
 
 friend class MM_Buffer;
-
 public:
     MM_BufferUnit(): dirty(false), refCount(0), usedCount(0) {
         bid.fd = -1;
@@ -30,8 +29,6 @@ public:
     char* GetPtr() {return content;}
     int GetUsedCnt()const {return usedCount;}
     void SetUsedCnt(int cnt) {usedCount = cnt;}
-
-
 private:
     void clear() {
         dirty = false;
@@ -42,11 +39,11 @@ private:
         memset(content, 0, BLOCK_SIZE);
     }
 
-    bool dirty;
-    FM_Bid bid;
-    int refCount;
-    int usedCount;
-    char* content;
+    bool dirty;  //标记脏
+    FM_Bid bid;  //当前缓存块对应物理块
+    int refCount;  //引用计数
+    int usedCount;  //近期使用次数
+    char* content;  //缓存内容
 };
 
 #endif
