@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
     //----------------------------------
     task1(); 
     task3();
-    task4();
+    //task4();
     //----------------------------------
     dbClear();
 
@@ -379,7 +379,6 @@ void dbInit(int argc, char* argv[]) {
 void task1() {
 
     //--------插入记录----------------
-    //std::cout<<WORK_DIR<<std::endl;
     RM_TableHandler tblHandler((WORK_DIR + "account").c_str());
     auto meta = tblHandler.GetMeta();
     
@@ -403,15 +402,28 @@ void task1() {
         //std::cout<<tblHandler.GetFileHdr().blkCnt<<std::endl;
     }
     
-    
+    /*
     //--------读出记录----------------
     RM_TblIterator iter;
     strcpy(accNum.msg, "accNum");
-    strcpy(branchName.msg, "branchName");
-    //printf("%s %s %s\n", accNum.msg, branchName.msg, "balance");
+    strcpy(branchName.msg, "branch_name");
+    printf("%s %s %s\n", accNum.msg, branchName.msg, "balance");
     tuple<SString<10>, SString<30>, double> item;
 
     RM_Record rec;
+    std::vector<DB_Opt> lims;
+    DB_Opt opt;
+    opt.colName  = branchName.msg;
+    opt.type = DB_STRING;
+    opt.optr = EQUAL;
+    strcpy(opt.data.sData, "Perryridge");
+    lims.push_back(opt);
+    opt.colName  = "balance";
+    opt.type = DB_DOUBLE;
+    opt.optr = LESS;
+    opt.data.lfData = 10000.0;
+    lims.push_back(opt);
+    iter.SetLimits(lims);
     tblHandler.GetIter(iter);
     char tStr1[64];
     char tStr2[64];
@@ -423,29 +435,54 @@ void task1() {
         rec.GetColData(tblHandler.GetMeta(), 0, tStr1);
         rec.GetColData(tblHandler.GetMeta(), 1, tStr2);
         rec.GetColData(tblHandler.GetMeta(), 2, &tLf);
-        //printf("%s %s %lf\n", tStr1, tStr2, tLf);
+        printf("%s %s %lf\n", tStr1, tStr2, tLf);
     }while(true);
-    //std::cout<<tblHandler.GetFileHdr().blkCnt<<std::endl;
+    */
     tblHandler.CloseTbl();
 }
 
 void task3() {
     IM_Manager iManager;
-    iManager.CreateIndex((WORK_DIR + "account").c_str(), 0);
-    //iManager.TraverseLeaf((WORK_DIR + "account").c_str(), 0);
-    //iManager.ClearIndex((WORK_DIR + "account").c_str(), 0);
-    //iManager.TraverseLeaf((WORK_DIR + "account").c_str(), 0);
+    iManager.CreateIndex((WORK_DIR + "account").c_str(), 0);  // 创建索引
+    IM_IdxHandler iHdl;
+    iManager.OpenIndex((WORK_DIR + "account").c_str(), 0, iHdl);  //打开索引
+    iHdl.VisualizeNode();  //可视化树状结构
+    iManager.TraverseLeaf((WORK_DIR + "account").c_str(), 0);  //遍历叶子节点
+    //一隔一删除一半索引项
+    RM_TblIterator iter;
+    RM_TableHandler tblHandler((WORK_DIR + "account").c_str());
+    RM_Record rec;
+    tblHandler.GetIter(iter);
+    char tStr1[64];
+    bool flag = true;
+    do {
+        rec = iter.NextRec();
+        if (rec.rid.num == -1)
+            break;
+        if (flag) {
+            rec.GetColData(tblHandler.GetMeta(), 0, tStr1);
+            iHdl.DeleteEntry(tStr1, rec.rid);
+        }
+        flag = !flag;
+    }while(true);
+    iHdl.VisualizeNode();  //可视化树状结构
+    iManager.ClearIndex((WORK_DIR + "account").c_str(), 0);  //清空索引
+    iHdl.VisualizeNode();
+    iManager.TraverseLeaf((WORK_DIR + "account").c_str(), 0);  //遍历叶子节点
+    iHdl.CloseIdx();
 }
 
 void task4() {
-    //printf("task4\n");
     IM_Manager iManager;
     IM_IdxHandler iHdl;
     RM_TableHandler tHandler((WORK_DIR + "account").c_str());
-    //std::cout<<tHandler.GetFileHdr().blkCnt<<std::endl;
     iManager.OpenIndex((WORK_DIR + "account").c_str(), 0, iHdl);
     IM_IdxIterator iter(iHdl.GetType(), iHdl.GetLen());
-    /*
+    
+    iHdl.GetIter(iter);
+    char tStr1[64];
+    char tStr2[64];
+    double tLf;
     std::vector<DB_NumOpt> lims;
     DB_NumOpt opt;
     opt.colPos = 0, opt.type = iHdl.GetType();
@@ -456,12 +493,8 @@ void task4() {
     strcpy(opt.data.sData, "A-700");
     lims.push_back(opt);
     iter.SetLimits(lims);
-    */
-    iHdl.GetIter(iter);
-    char tStr1[64];
-    char tStr2[64];
-    double tLf;
-    
+
+
     while(iter.HasNext()) {
         auto rec = iter.NextRec();
         rec.GetColData(tHandler.GetMeta(), 0, tStr1);
@@ -469,9 +502,9 @@ void task4() {
         rec.GetColData(tHandler.GetMeta(), 2, &tLf);
         printf("%s %s %lf\n", tStr1, tStr2, tLf);
     }
-    
     //iManager.TraverseLeaf((WORK_DIR + "account").c_str(), 0);
     //iManager.ClearIndex((WORK_DIR + "account").c_str(), 0);
     //iManager.TraverseLeaf((WORK_DIR + "account").c_str(), 0);
+    
 }
 
