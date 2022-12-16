@@ -33,7 +33,7 @@ struct RM_TblMeta {
             if (colName[i] == name)
                 return colPos[i];
         }
-        //std::cout<<name<<std::endl;
+        std::cout<<name<<" Not Exist"<<std::endl;
         return NOT_EXIST;
     }
     int GetIdxByName(const std::string& name) const {
@@ -42,7 +42,7 @@ struct RM_TblMeta {
             if (colName[i] == name)
                 return i;
         }
-        //std::cout<<name<<std::endl;
+        std::cout<<name<<" Not Exist"<<std::endl;
         return NOT_EXIST;
     }
     std::string GetNameByPos(const int pos) const {
@@ -98,6 +98,18 @@ struct RM_TblMeta {
             }
         }
         return res;
+    }
+    int GetMaxDynamicPartLen() const {
+        int res = 0;
+        for (int i = 0; i < colNum; ++i) {
+            if (isDynamic[i]) {
+                res += length[i];
+            }
+        }
+        return res;
+    }
+    int GetMaxLen() const {
+        return GetPrefixLen() + GetStaticPartLen() + GetMaxDynamicPartLen();
     }
 };
 
