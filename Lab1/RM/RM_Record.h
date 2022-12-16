@@ -149,7 +149,7 @@ struct RM_Record {
         }
         return res;
     }
-    PosInfo GetDynamicPosInfo(const RM_TblMeta& meta, int pos) {
+    PosInfo GetDynamicPosInfo(const RM_TblMeta& meta, int pos) const {
         int idx = 0;
         int preDNum = 0;
         for (int i = 0; i < meta.colNum; ++i) {
@@ -414,6 +414,5 @@ struct RM_Record {
     }
 
 };
-
 
 #endif

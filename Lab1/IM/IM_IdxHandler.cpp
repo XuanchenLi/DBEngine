@@ -910,6 +910,8 @@ RC IM_IdxHandler::GetNextLeaf(BTreeNode& L) {
 
 RC IM_IdxHandler::GetIter(IM_IdxIterator& iter) {
     iter.SetTypeLen(attrType, attrLen);
+    RM_TableHandler tH(GetTblPathFromIdxPath(idxPath).c_str());
+    iter.SetMeta(tH.GetMeta());
     iter.SetIdxHandler(*this);
     //iter.Reset();
     return SUCCESS;

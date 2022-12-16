@@ -255,6 +255,7 @@ RC RM_TableHandler::OpenTbl(const char* path) {
 
 RC RM_TableHandler::GetIter(RM_TblIterator& iter) {
     iter.tHandler = *this;
+    iter.SetMeta(metaData);
     iter.Reset();
     return SUCCESS;
 }

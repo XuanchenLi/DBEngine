@@ -48,3 +48,13 @@ std::tuple<std::string, std::string, int> GetIdxName(const std::string& str) {
     }
     return std::make_tuple(dbName, tblName, colPos);
 }
+
+std::string GetTblPathFromIdxPath(const std::string& p) {
+    std::string tmp = p;
+    if (tmp[tmp.length() - 1] == '/') {
+        tmp = tmp.substr(0, tmp.length() - 1);
+    }
+    int idx = tmp.find_last_of('_');
+    tmp = tmp.substr(0, idx);
+    return tmp;
+}
