@@ -13,6 +13,8 @@
 #include "RM/RM_TableHandler.h"
 #include "MM/MM_StrategyLRU.h"
 #include "RM/RM_Record.h"
+#include "QNodes/IndexDirectAccessNode.h"
+
 
 using namespace std;
 
@@ -47,7 +49,7 @@ int main(int argc, char* argv[]) {
     //----------------------------------
     task1(); 
     //task3();
-    //task4();
+    task4();
     //----------------------------------
     dbClear();
 
@@ -504,8 +506,25 @@ void task3() {
 }
 
 void task4() {
+    IM_Manager iManager;
+    iManager.CreateIndex((WORK_DIR + "account").c_str(), 0);  // 创建索引
+    IM_IdxHandler iHdl;
+    iManager.OpenIndex((WORK_DIR + "account").c_str(), 0, iHdl);
+    IM_IdxIterator idxIter(iHdl.GetType(), iHdl.GetLen());
+    iHdl.GetIter(idxIter);
+    IndexDirectAccessNode indexAccessNode;
+    indexAccessNode.SetSrcIter(&idxIter);
+    RM_TblMeta meta;
+    meta.isDynamic[0] = false;
+    meta.colNum = 1;
+    meta.colPos[0] = 0;
+    meta.type[0] = DB_STRING;
+    meta.length[0] = 64;
+    meta.colName[0] = "account_number";
+    indexAccessNode.SetMeta(meta);
+    indexAccessNode.Reset();
+    
     
 
-    
 }
 

@@ -54,6 +54,7 @@ RC IndexDirectAccessNode::Reset() {
     srcIter->Reset();
     conflict = srcIter->IsConflict();
     done = !srcIter->HasNext();
+    return SUCCESS;
 }
 RC IndexDirectAccessNode::SetMeta(const RM_TblMeta &m) {
     meta = m;
@@ -61,6 +62,7 @@ RC IndexDirectAccessNode::SetMeta(const RM_TblMeta &m) {
         delete[] content;
     }
     content = new char[m.GetMaxLen()];
+    return SUCCESS;
 }
 bool IndexDirectAccessNode::HasNext() const {
     if (srcIter == nullptr) {

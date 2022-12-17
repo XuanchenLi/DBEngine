@@ -10,6 +10,9 @@ public:
     RC Reset();
     RC SetMeta(const RM_TblMeta &m);
     bool HasNext()const;
+    void SetSrcIter(IM_IdxIterator* src) {
+        srcIter = src;
+    }
     IndexDirectAccessNode():DB_Iterator() {srcIter = nullptr;}
     ~IndexDirectAccessNode() {
         if (content != nullptr) {

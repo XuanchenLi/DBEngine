@@ -8,8 +8,13 @@ class NestedLoopJoinNode : public DB_Iterator {
 public:
     RM_Record NextRec();
     RC Reset();
+    RC SetLimits(std::vector<DB_JoinOpt>& lims);
     RC SetMeta(const RM_TblMeta &m);
-    bool HasNext()const;
+    RC SetNames(const std::vector<std::string> lN, const std::vector<std::string> rN) {
+        lNames = lN;
+        rNames = rN;
+    }
+    //bool HasNext()const; //use default is ok
     NestedLoopJoinNode():DB_Iterator() {lhsIter = rhsIter = nullptr;}
     ~NestedLoopJoinNode() {
         if (content != nullptr) {
@@ -19,6 +24,9 @@ public:
     NestedLoopJoinNode(const NestedLoopJoinNode& rhs) : DB_Iterator(rhs) {
         content = new char[meta.GetMaxLen()];
         memcpy(content, rhs.content, meta.GetMaxLen());
+        limits = rhs.limits;
+        lNames = rhs.lNames;
+        rNames = rhs.rNames;
         lhsIter = rhs.lhsIter;
         rhsIter = rhs.rhsIter;
     }
@@ -31,12 +39,18 @@ public:
             delete [] content;
         content = new char[meta.GetMaxLen()];
         memcpy(content, rhs.content, meta.GetMaxLen());
+        limits = rhs.limits;
+        lNames = rhs.lNames;
+        rNames = rhs.rNames;
         lhsIter = rhs.lhsIter;
         rhsIter = rhs.rhsIter;
         return *this;
     }
     NestedLoopJoinNode(NestedLoopJoinNode&& rhs) : DB_Iterator(rhs) {
         content = rhs.content;
+        limits = rhs.limits;
+        lNames = rhs.lNames;
+        rNames = rhs.rNames;
         lhsIter = rhs.lhsIter;
         rhsIter = rhs.rhsIter;
         rhs.content = nullptr;
@@ -47,6 +61,9 @@ public:
             return *this;
         }
         DB_Iterator::operator=(rhs);
+        limits = rhs.limits;
+        lNames = rhs.lNames;
+        rNames = rhs.rNames;
         content = rhs.content;
         lhsIter = rhs.lhsIter;
         rhsIter = rhs.rhsIter;
@@ -56,7 +73,10 @@ public:
     }
 
 private:
+    RM_Record lNextRec, rNextRec;
     DB_Iterator* lhsIter, *rhsIter;
+    std::vector<DB_JoinOpt> limits;
+    std::vector<std::string> lNames, rNames;
     char* content;
 };
 

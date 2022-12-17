@@ -7,7 +7,10 @@
 #include <vector>
 
 RC ProjectMemory(char* target, const RM_TblMeta &meta, const RM_Record& srcRec, const RM_TblMeta &srcMeta);
-
+RC ProjectMemory(char* content, 
+                const RM_TblMeta &meta,
+                const RM_Record& lRec, const RM_TblMeta &lMeta, std::vector<std::string> lNames, 
+                const RM_Record& rRec, const RM_TblMeta &rMeta,std::vector<std::string> rNames);
 
 class DB_Iterator {
 public:
@@ -15,7 +18,7 @@ public:
     virtual bool HasNext()const {return !done;}
     bool IsConflict() const {return conflict;}
     virtual RM_Record NextRec() = 0;
-    virtual RC SetLimits(const std::vector<DB_Opt>& rawLim) {};
+    //virtual RC SetLimits(const std::vector<DB_Opt>& rawLim) {};
     virtual RC Reset() {done = false; conflict = false;};
     virtual RC SetMeta(const RM_TblMeta &m) {
         meta = m;

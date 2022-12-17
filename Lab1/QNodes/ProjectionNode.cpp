@@ -25,4 +25,5 @@ RC ProjectionNode::SetMeta(const RM_TblMeta &m) {
         delete[] content;
     }
     content = new char[m.GetMaxLen()];
+    return SUCCESS;
 }

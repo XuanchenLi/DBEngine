@@ -58,3 +58,17 @@ std::string GetTblPathFromIdxPath(const std::string& p) {
     tmp = tmp.substr(0, idx);
     return tmp;
 }
+
+int endswith(std::string s, std::string sub) {
+	if (s.rfind(sub) == -1) {//排除出现类似s:23   sub:123的情况.
+		return 0;
+	}
+	else {
+		return s.rfind(sub) == (s.length() - sub.length()) ? 1 : 0;
+	}
+
+}
+int startswith(std::string s, std::string sub) {
+	
+		return s.find(sub) == 0 ? 1 : 0;
+}

@@ -23,6 +23,14 @@ typedef struct DB_Option {
 
 }DB_Opt;
 
+typedef struct DB_JoinOption {
+    db_optr optr;
+    std::string lColName;
+    std::string rColName;
+    dbType type;
+
+}DB_JoinOpt;
+
 typedef struct DB_NumericOption {
     db_optr optr;
     int colPos;

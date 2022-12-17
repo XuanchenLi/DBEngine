@@ -13,9 +13,6 @@ public:
         return Reset();
     }
     RM_Record NextRec();
-    RC SetLimits(const std::vector<DB_Opt>& rawLim) {
-        srcIter->SetLimits(rawLim);
-    }
     RC Reset() {
         DB_Iterator::Reset();
         if (srcIter == nullptr) {
@@ -24,6 +21,7 @@ public:
         srcIter->Reset();
         conflict = srcIter->IsConflict();
         done = !srcIter->HasNext();
+        return SUCCESS;
     }
     bool HasNext()const {
         if (srcIter == nullptr) {

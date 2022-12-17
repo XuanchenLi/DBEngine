@@ -10,7 +10,12 @@
 #include "utils/DB_Option.h"
 #include "RM_RecPrefix.h"
 
-struct RM_Record {
+struct RM_Record;
+
+bool validJoinOpt(RM_Record&,const RM_TblMeta&, RM_Record&, const RM_TblMeta&, std::vector<DB_JoinOpt>&);
+
+
+typedef struct RM_Record {
 
     RM_Rid rid;
     RM_RecPrefix prefix;  //记录前缀
@@ -413,6 +418,6 @@ struct RM_Record {
         return true;
     }
 
-};
+}RM_Record;
 
 #endif
