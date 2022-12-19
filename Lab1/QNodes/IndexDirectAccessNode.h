@@ -13,7 +13,7 @@ public:
     void SetSrcIter(IM_IdxIterator* src) {
         srcIter = src;
     }
-    IndexDirectAccessNode():DB_Iterator() {srcIter = nullptr;}
+    IndexDirectAccessNode():DB_Iterator() {srcIter = nullptr; content=nullptr;}
     ~IndexDirectAccessNode() {
         if (content != nullptr) {
             delete[] content;

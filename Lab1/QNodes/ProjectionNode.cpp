@@ -12,10 +12,11 @@ RM_Record ProjectionNode::NextRec() {
         return rec;
     }
     RM_Record srcRec = srcIter->NextRec();
+    //return srcRec;
     done = !srcIter->HasNext();
-    rec.InitPrefix(meta);
     rec.addr = content;
     ProjectMemory(content, meta, srcRec, srcIter->GetMeta());
+    rec.InitPrefix(meta);
     return rec;
 }
 

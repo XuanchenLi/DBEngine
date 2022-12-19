@@ -13,9 +13,15 @@ public:
     RC SetNames(const std::vector<std::string> lN, const std::vector<std::string> rN) {
         lNames = lN;
         rNames = rN;
+        return SUCCESS;
+    }
+    RC SetSrcIter(DB_Iterator* lhs, DB_Iterator* rhs) {
+        lhsIter = lhs;
+        rhsIter = rhs;
+        return SUCCESS;
     }
     //bool HasNext()const; //use default is ok
-    NestedLoopJoinNode():DB_Iterator() {lhsIter = rhsIter = nullptr;}
+    NestedLoopJoinNode():DB_Iterator() {lhsIter = rhsIter = nullptr;content=nullptr;}
     ~NestedLoopJoinNode() {
         if (content != nullptr) {
             delete[] content;

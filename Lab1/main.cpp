@@ -14,6 +14,8 @@
 #include "MM/MM_StrategyLRU.h"
 #include "RM/RM_Record.h"
 #include "QNodes/IndexDirectAccessNode.h"
+#include "QNodes/ProjectionNode.h"
+#include "QNodes/NestedLoopJoinNode.h"
 
 
 using namespace std;
@@ -37,6 +39,7 @@ void dbInit(int argc, char* argv[]);
 void task1();
 void task3();
 void task4();
+void testNode();
 
 
 int main(int argc, char* argv[]) {
@@ -49,7 +52,8 @@ int main(int argc, char* argv[]) {
     //----------------------------------
     task1(); 
     //task3();
-    task4();
+    testNode();
+    //task4();
     //----------------------------------
     dbClear();
 
@@ -505,7 +509,7 @@ void task3() {
 
 }
 
-void task4() {
+void testNode() {
     IM_Manager iManager;
     iManager.CreateIndex((WORK_DIR + "account").c_str(), 0);  // 创建索引
     IM_IdxHandler iHdl;
@@ -524,7 +528,52 @@ void task4() {
     indexAccessNode.SetMeta(meta);
     indexAccessNode.Reset();
     
-    
+   
+    RM_TableHandler tHandler((WORK_DIR + "account").c_str());
+    RM_TblIterator tblIter;
+    tHandler.GetIter(tblIter);
+    ProjectionNode projectNode;
+    projectNode.SetSrcIter(&tblIter);
+    RM_TblMeta meta1;
+    meta1.colNum = 2;
+    meta1.isDynamic[0] = true;
+    meta1.colPos[0] = 0;
+    meta1.type[0] = DB_STRING;
+    meta1.length[0] = 30;
+    meta1.colName[0] = "branch_name";
+    meta1.isDynamic[1] = false;
+    meta1.colPos[1] = 1;
+    meta1.type[1] = DB_DOUBLE;
+    meta1.length[1] = 0;
+    meta1.colName[1] = "balance";
+    projectNode.SetMeta(meta1);
 
+    NestedLoopJoinNode nestedNode;
+    nestedNode.SetSrcIter(&indexAccessNode, &projectNode);
+    std::vector<std::string> lN, rN;
+    lN.push_back("account_number");
+    rN.push_back("balance");
+    rN.push_back("branc_name");
+    nestedNode.SetNames(lN, rN);
+    RM_TblMeta meta3 = tHandler.GetMeta();
+    meta3.isDynamic[0] = false;
+    nestedNode.SetMeta(meta3);
+    nestedNode.Reset();
+    char str[64];
+    char str1[64];
+    double balance;
+    
+    while (nestedNode.HasNext()) {
+        RM_Record rec = nestedNode.NextRec();
+        rec.GetColData(nestedNode.GetMeta(), 0, str);
+        rec.GetColData(nestedNode.GetMeta(), 1, str1);
+        rec.GetColData(nestedNode.GetMeta(), 2, &balance);
+        printf("%s %s %lf\n", str, str1, balance);
+    }
+    
+    /*
+    NestedLoopJoinNode nestedNode2;
+    nestedNode.SetSrcIter(&nestedNode, &projectNode);
+    */
 }
 

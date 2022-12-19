@@ -41,10 +41,19 @@ RM_Record NestedLoopJoinNode::NextRec() {
     if (!HasNext()) {
         return res;
     }
-    res.InitPrefix(meta);
-    ProjectMemory(content, meta, lNextRec, lhsIter->GetMeta(), lNames, rNextRec, rhsIter->GetMeta(), rNames);
     res.addr = content;
+    ProjectMemory(content, meta, lNextRec, lhsIter->GetMeta(), lNames, rNextRec, rhsIter->GetMeta(), rNames);
+    res.InitPrefix(meta);
     RM_Record lRec, rRec;
+    lRec = lNextRec;
+    while(rhsIter->HasNext()) {
+        rRec = rhsIter->NextRec();
+        if (validJoinOpt(lRec, lhsIter->GetMeta(), rRec, rhsIter->GetMeta(), limits)) {
+            lNextRec = lRec, rNextRec = rRec;
+            return res;
+        }
+    }
+    rhsIter->Reset();
     while(lhsIter->HasNext()) {
         lRec = lhsIter->NextRec();
         while(rhsIter->HasNext()) {

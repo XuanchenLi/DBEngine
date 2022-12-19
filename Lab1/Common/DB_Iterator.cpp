@@ -16,8 +16,10 @@ RC ProjectMemory(char* content, const RM_TblMeta &meta, const RM_Record& srcRec,
             PosInfo srcPosInfo = srcRec.GetDynamicPosInfo(srcMeta, srcMeta.GetPosByName(meta.colName[i]));
             posInfo.start = dOff;
             posInfo.end = dOff + srcPosInfo.end - srcPosInfo.start;
+            //std::cout<<posInfo.start<<" "<<posInfo.end<<std::endl;
             memcpy(content + sizeof(int) + sizeof(bool) + dCnt * sizeof(posInfo), &posInfo, sizeof(posInfo));
             memcpy(content + dOff, srcRec.addr + srcPosInfo.start, srcPosInfo.end - srcPosInfo.start);
+            //puts(content + dOff);
             dOff += srcPosInfo.end - srcPosInfo.start;
             dCnt++;
         }else {
@@ -60,12 +62,20 @@ RC ProjectMemory(char* content,
             PosInfo srcPosInfo;
             RM_Record srcRec;
             if (std::find(lNames.begin(), lNames.end(), meta.colName[i]) != lNames.end()) {
+                std::string name = meta.colName[i];
+                if (name.length() > 3 && name[name.length() - 3] == '(') {
+                    name = name.substr(0, name.length() - 3);
+                }
                 srcRec = lRec;
-                srcPosInfo = srcRec.GetDynamicPosInfo(lMeta, lMeta.GetPosByName(meta.colName[i]));
+                srcPosInfo = srcRec.GetDynamicPosInfo(lMeta, lMeta.GetPosByName(name));
             }
             else {
+                std::string name = meta.colName[i];
+                if (name.length() > 3 && name[name.length() - 3] == '(') {
+                    name = name.substr(0, name.length() - 3);
+                }
                 srcRec = rRec;
-                srcPosInfo = srcRec.GetDynamicPosInfo(rMeta, rMeta.GetPosByName(meta.colName[i]));
+                srcPosInfo = srcRec.GetDynamicPosInfo(rMeta, rMeta.GetPosByName(name));
             }
             posInfo.start = dOff;
             posInfo.end = dOff + srcPosInfo.end - srcPosInfo.start;
@@ -85,9 +95,13 @@ RC ProjectMemory(char* content,
                 srcRec = rRec;
                 srcMeta = rMeta;
             }
+            std::string name = meta.colName[i];
+            if (name.length() > 3 && name[name.length() - 3] == '(') {
+                name = name.substr(0, name.length() - 3);
+            }
             int srcOff = srcMeta.GetPrefixLen() + 
                         srcMeta.GetStaticPartOff(
-                            srcMeta.colPos[srcMeta.GetIdxByName(meta.colName[i])]
+                            srcMeta.colPos[srcMeta.GetIdxByName(name)]
                             );
             switch (meta.type[i]) {
                 case DB_INT:
