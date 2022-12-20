@@ -19,7 +19,7 @@ public:
     bool IsConflict() const {return conflict;}
     virtual RM_Record NextRec() = 0;
     //virtual RC SetLimits(const std::vector<DB_Opt>& rawLim) {};
-    virtual RC Reset() {done = false; conflict = false;};
+    virtual RC Reset() {done = false; conflict = false; return SUCCESS;};
     virtual RC SetMeta(const RM_TblMeta &m) {
         meta = m;
         return SUCCESS;

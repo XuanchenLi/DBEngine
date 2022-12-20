@@ -6,24 +6,24 @@
 #include "utils/DB_Option.h"
 
 
-typedef struct RelAttr {
-    RelAttr() {}
-    RelAttr(std::string& t, std::string& c) {
+typedef struct MRelAttr {
+    MRelAttr() {}
+    MRelAttr(std::string& t, std::string& c) {
         tblName = t;
         colName = c;
     }
     std::string tblName;
     std::string colName;
 public:
-    bool operator<(const RelAttr& rhs) const {
+    bool operator<(const MRelAttr& rhs) const {
         if (tblName == rhs.tblName)
             return tblName < rhs.tblName;
         return colName < rhs.colName;
     }
-    bool operator==(const RelAttr& rhs) const {
+    bool operator==(const MRelAttr& rhs) const {
         return tblName == rhs.tblName && colName == rhs.colName;
     }
-}RelAttr;
+}MRelAttr;
 
 typedef struct RelNumAttr {
     std::string tblName;
@@ -41,8 +41,9 @@ typedef struct RelNumAttr {
 
 
 class QM_Manager {
-    RC Select(std::vector<RelAttr>& selAttrs, std::vector<std::string>& relations, std::vector<DB_Cond>& conditions);
-    bool ValidAttr(const std::vector<RelAttr>&);
+    RC Select();
+    RC Select(std::vector<MRelAttr>& selAttrs, std::vector<std::string>& relations, std::vector<DB_Cond>& conditions);
+    bool ValidAttr(const std::vector<MRelAttr>&);
     bool ValidRel(const std::vector<std::string>&);
 };
 

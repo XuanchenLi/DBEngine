@@ -3,9 +3,13 @@
 
 #define BLOCK_LIMIT 0.8
 #define MAXCOLNUM 30
+#define MAXSTRINGLEN  255 
+#define MAXNAME       24
 #include <string>
 #include <tuple>
 #include "utils/DBType.h"
+#include "utils/AggFun.h"
+#include "utils/Optrs.h"
 
 class FM_Manager;
 class MM_Buffer;

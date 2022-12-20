@@ -44,6 +44,13 @@
         "sstream": "cpp",
         "stdexcept": "cpp",
         "streambuf": "cpp",
-        "typeinfo": "cpp"
-    }
+        "typeinfo": "cpp",
+        "main.h": "c",
+        "optrs.h": "c",
+        "dbtype.h": "c",
+        "parser_internal.h": "c",
+        "parser.h": "c",
+        "scanhelp.c": "cpp"
+    },
+    "C_Cpp.errorSquiggles": "enabledIfIncludesResolve"
 }

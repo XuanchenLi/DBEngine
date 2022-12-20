@@ -169,7 +169,7 @@ RC IM_IdxHandler::FindLeaf(void *pData, const RM_Rid &rid, BTreeNode &L)
     }
     
     //Traverse();
-    printf("Leaf That Contain Key %s Ptr %d %d Not Exist\n", pData, rid.num, rid.slot);
+    printf("Leaf That Contain Key %s Ptr %d %d Not Exist\n", (char*)pData, rid.num, rid.slot);
     return NOT_EXIST;
 }
 
@@ -847,7 +847,7 @@ RC IM_IdxHandler::Traverse() {
         //std::cout<<L.Ptrs.size()<<" "<<L.keys.size()<<std::endl;
         auto j = L.Ptrs.begin();
         for (auto key: L.keys) {
-            printf("key %s ----- ptr %d %d\n", key, (*j).num, (*j).slot);
+            printf("key %s ----- ptr %d %d\n", (char*)key, (*j).num, (*j).slot);
             j++;
         }
         
@@ -941,5 +941,6 @@ RC IM_IdxHandler::VisualizeAux(int level, BTreeNode& L) {
         L2.SetData(pHdl);
         VisualizeAux(level + 1, L2);
     }
+    return  SUCCESS;
 }
 

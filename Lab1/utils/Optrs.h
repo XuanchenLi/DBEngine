@@ -7,8 +7,8 @@ enum db_optr {
     LESS = 3,  //<
     GREATER = 4,  //>
     NOT_LESS = 5, //>=
-    NOT_GREATER = 6 //<=
-
+    NOT_GREATER = 6, //<=
+    NO_OP
 };
 
 

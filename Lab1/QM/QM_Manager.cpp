@@ -7,7 +7,7 @@
 #include "RM/RM_TblIterator.h"
 
 
-bool QM_Manager::ValidAttr(const std::vector<RelAttr>& attrs) {
+bool QM_Manager::ValidAttr(const std::vector<MRelAttr>& attrs) {
     RM_TableHandler tHdl((DBT_DIR + COL_DIC_NAME).c_str());
     RM_TblIterator iter;
 
@@ -78,9 +78,13 @@ bool QM_Manager::ValidRel(const std::vector<std::string>& attrs) {
 
 }
 
+RC QM_Manager::Select() {
+    std::cout<<"do select\n";
+    return SUCCESS;
+}
 
-
-RC QM_Manager::Select(std::vector<RelAttr>& selAttrs, std::vector<std::string>& relations, std::vector<DB_Cond>& conditions) {
+/*
+RC QM_Manager::Select(std::vector<MRelAttr>& selAttrs, std::vector<std::string>& relations, std::vector<DB_Cond>& conditions) {
     if (selAttrs.size() == 0 || relations.size() == 0) {
         return BAD_QUERY;
     }
@@ -120,12 +124,12 @@ RC QM_Manager::Select(std::vector<RelAttr>& selAttrs, std::vector<std::string>& 
         return FAILURE;
     }
         
-    std::vector<RelAttr> allAttrs;
+    std::vector<MRelAttr> allAttrs;
     allAttrs.insert(allAttrs.begin(), selAttrs.begin(), selAttrs.end());
     for (auto item : conditions) {
-        allAttrs.push_back(RelAttr(item.lTblName, item.lColName));
+        allAttrs.push_back(MRelAttr(item.lTblName, item.lColName));
         if (!item.isConst) {
-            allAttrs.push_back(RelAttr(item.rTblName, item.rColName));
+            allAttrs.push_back(MRelAttr(item.rTblName, item.rColName));
         }
     }
     std::sort(allAttrs.begin(), allAttrs.end());
@@ -200,3 +204,4 @@ RC QM_Manager::Select(std::vector<RelAttr>& selAttrs, std::vector<std::string>& 
     }
 
 }
+*/

@@ -12,6 +12,12 @@
                 "${fileDirname}/${fileBasenameNoExtension}",
                 "-L${workspaceFolder}/lib",   // 指明了静态库所在文件夹
                 "-I${workspaceFolder}/include", // 指明了代码的 include path
+                //"parser_internal.h",
+                //"parser.h",
+                //"y.tab.cpp",
+                "scan.cpp",
+                //"nodes.c",
+                "interp.cpp",
                 "-I",
                 "${workspaceFolder}/Lab1"
             ],

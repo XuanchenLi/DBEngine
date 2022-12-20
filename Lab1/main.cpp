@@ -13,9 +13,11 @@
 #include "RM/RM_TableHandler.h"
 #include "MM/MM_StrategyLRU.h"
 #include "RM/RM_Record.h"
+#include "QM/QM_Manager.h"
 #include "QNodes/IndexDirectAccessNode.h"
 #include "QNodes/ProjectionNode.h"
 #include "QNodes/NestedLoopJoinNode.h"
+#include "parser.tab.cpp"
 
 
 using namespace std;
@@ -51,10 +53,13 @@ int main(int argc, char* argv[]) {
     dbInit(argc, argv);
     //----------------------------------
     task1(); 
+
     //task3();
-    testNode();
+    //testNode();
     //task4();
     //----------------------------------
+    QM_Manager qM_Manager;
+    RC parseRC = RBparse(*fM_Manager, qM_Manager, *gBuffer);
     dbClear();
 
 }
