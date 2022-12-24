@@ -14,6 +14,7 @@ RM_Record IndexDirectAccessNode::NextRec() {
     if (content == nullptr) {
         return rec;
     }
+    hasReseted = false;
     std::pair<void*, RM_Rid> pr = srcIter->NextPair();
     done = !srcIter->HasNext();
     if (pr.first == nullptr) {
@@ -51,6 +52,9 @@ RC IndexDirectAccessNode::Reset() {
     if (srcIter == nullptr) {
         return FAILURE;
     }
+    if (hasReseted)
+        return SUCCESS;
+    hasReseted = true;
     srcIter->Reset();
     conflict = srcIter->IsConflict();
     done = !srcIter->HasNext();

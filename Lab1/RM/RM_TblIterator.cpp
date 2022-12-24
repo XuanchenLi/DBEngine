@@ -15,6 +15,9 @@
 extern MM_Buffer* gBuffer;
 
 RC RM_TblIterator::Reset() {
+    if (hasReseted)
+        return SUCCESS;
+    hasReseted = true;
     done = false;
     this->curPNum = 1;
     this->curSNum = -1;
@@ -71,6 +74,7 @@ RM_Record RM_TblIterator::NextRec() {
         //std::cout<<"block out of range " << tHandler.fHandler->GetBlockNum()<<std::endl;
         return res;
     }
+    hasReseted = false;
     MM_PageHandler pHdr;
     RM_RecHdr tmpRHdr;
     int off = sizeof(MM_PageHdr) + curSNum * sizeof(RM_RecHdr);
@@ -130,12 +134,14 @@ RM_Record RM_TblIterator::NextRec() {
 
 RC RM_TblIterator::SetTbl(const char* tblPath) {
     tHandler = RM_TableHandler(tblPath);
+    hasReseted = false;
     Reset();
     return SUCCESS;
 }
 
 RC RM_TblIterator::SetLimits(const std::vector<DB_Opt>& lim) {
     this->limits = lim;
+    hasReseted = false;
     Reset();
     return SUCCESS;
 }

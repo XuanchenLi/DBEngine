@@ -5,6 +5,9 @@ RC NestedLoopJoinNode::Reset() {
     if (lhsIter == nullptr || rhsIter == nullptr) {
         return FAILURE;
     }
+    if (hasReseted)
+        return SUCCESS;
+    hasReseted = true;
     lhsIter->Reset();
     rhsIter->Reset();
     conflict = lhsIter->IsConflict() || rhsIter->IsConflict() || conflict;
@@ -41,6 +44,7 @@ RM_Record NestedLoopJoinNode::NextRec() {
     if (!HasNext()) {
         return res;
     }
+    hasReseted = false;
     res.addr = content;
     ProjectMemory(content, meta, lNextRec, lhsIter->GetMeta(), lNames, rNextRec, rhsIter->GetMeta(), rNames);
     res.InitPrefix(meta);

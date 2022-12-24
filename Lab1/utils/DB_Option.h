@@ -7,6 +7,7 @@
 #include "utils/Optrs.h"
 #include "utils/DBType.h"
 
+
 extern bool comp(dbType type, db_optr optr,const void* lhs,const void*rhs);
 
 
@@ -71,6 +72,8 @@ typedef struct DB_Condition {
         bool bData;
     }data;
 }DB_Cond;
+
+DB_Opt TransToOpt(DB_Cond cond);
 
 typedef struct DB_NumericCondition {
     db_optr optr;

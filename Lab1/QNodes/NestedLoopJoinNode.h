@@ -8,7 +8,10 @@ class NestedLoopJoinNode : public DB_Iterator {
 public:
     RM_Record NextRec();
     RC Reset();
-    RC SetLimits(std::vector<DB_JoinOpt>& lims);
+    RC SetLimits(std::vector<DB_JoinOpt>& lims) {
+        limits = lims;
+        hasReseted = false;
+    }
     RC SetMeta(const RM_TblMeta &m);
     RC SetNames(const std::vector<std::string> lN, const std::vector<std::string> rN) {
         lNames = lN;
@@ -18,14 +21,20 @@ public:
     RC SetSrcIter(DB_Iterator* lhs, DB_Iterator* rhs) {
         lhsIter = lhs;
         rhsIter = rhs;
+        hasReseted = false;
         return SUCCESS;
     }
     //bool HasNext()const; //use default is ok
+    DB_Iterator* clone() {return new NestedLoopJoinNode(*this);}
     NestedLoopJoinNode():DB_Iterator() {lhsIter = rhsIter = nullptr;content=nullptr;}
     ~NestedLoopJoinNode() {
         if (content != nullptr) {
             delete[] content;
         }
+        if (lhsIter != nullptr)
+            delete lhsIter;
+        if (rhsIter != nullptr) 
+            delete rhsIter;
     }
     NestedLoopJoinNode(const NestedLoopJoinNode& rhs) : DB_Iterator(rhs) {
         content = new char[meta.GetMaxLen()];
@@ -33,8 +42,8 @@ public:
         limits = rhs.limits;
         lNames = rhs.lNames;
         rNames = rhs.rNames;
-        lhsIter = rhs.lhsIter;
-        rhsIter = rhs.rhsIter;
+        lhsIter = rhs.lhsIter->clone();
+        rhsIter = rhs.rhsIter->clone();
     }
     NestedLoopJoinNode& operator=(const NestedLoopJoinNode& rhs) {
         DB_Iterator::operator=(rhs);
@@ -48,8 +57,8 @@ public:
         limits = rhs.limits;
         lNames = rhs.lNames;
         rNames = rhs.rNames;
-        lhsIter = rhs.lhsIter;
-        rhsIter = rhs.rhsIter;
+        lhsIter = rhs.lhsIter->clone();
+        rhsIter = rhs.rhsIter->clone();
         return *this;
     }
     NestedLoopJoinNode(NestedLoopJoinNode&& rhs) : DB_Iterator(rhs) {

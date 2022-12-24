@@ -107,8 +107,33 @@ void IM_IdxIterator::StandardizeLimits() {
 
 }
 
+RM_Record IM_IdxIterator::GetRecord(std::pair<void*, RM_Rid>& pr) {
+    RM_Record res;
+    RM_TableHandler tHandler(tblPath.c_str());
+    //std::cout<<path<<std::endl;
+    if (tHandler.GetFileHdr().blkCnt <= pr.second.num)
+    {
+        std::cout<<"block " << pr.second.num <<" out of range "<<tHandler.GetFileHdr().blkCnt<<std::endl;
+        return res;
+    }
+    res.rid = pr.second;
+    MM_PageHandler pHdr;
+    RM_RecHdr tmpRHdr;
+    int off = sizeof(MM_PageHdr) + res.rid.slot * sizeof(RM_RecHdr);
+    gBuffer->GetPage(FM_Bid(tHandler.GetFd(), res.rid.num), pHdr);
+    memcpy(&tmpRHdr, pHdr.GetPtr(off), sizeof(RM_RecHdr));
+    res.len = tmpRHdr.len;
+    res.addr = pHdr.GetPtr(tmpRHdr.off);
+    res.InitPrefix(tHandler.GetMeta());
+    return res;
+}
+
+
 
 RC IM_IdxIterator::Reset() {
+    if (hasReseted)
+        return SUCCESS;
+    hasReseted = true;
     done = false;
     gtOptIdx = -1, nlOptIdx = -1, eqOptIdx = -1, lOptIdx = -1, ngOptIdx = -1;
     for (int i = 0; i < limits.size(); ++i) {
@@ -152,6 +177,15 @@ RC IM_IdxIterator::Reset() {
                 }
                 if (flag) {
                     curSlot = i;
+                    if (!outerLimits.empty()) {
+                        auto pr = std::make_pair(curLeaf.GetKey(curSlot), curLeaf.GetPtr(curSlot));
+                        RM_Record rec = GetRecord(pr);
+                        if (rec.valid(meta, outerLimits)) {
+                            return SUCCESS;
+                        }else {
+                            continue;
+                        }
+                    }
                     return SUCCESS;
                 }
             }
@@ -173,7 +207,7 @@ RC IM_IdxIterator::Reset() {
                 }
 
             }
-        }
+    }
     return SUCCESS;
 }
 
@@ -181,6 +215,7 @@ std::pair<void*, RM_Rid> IM_IdxIterator::NextPair() {
     if (done || conflict) {
         return std::make_pair(nullptr, RM_Rid());
     }
+    hasReseted = false;
     auto res = std::make_pair(curLeaf.GetKey(curSlot), curLeaf.GetPtr(curSlot));
     while(true) {
             for (int i = curSlot + 1; i < curLeaf.GetKeyNum(); ++i) {
@@ -193,6 +228,15 @@ std::pair<void*, RM_Rid> IM_IdxIterator::NextPair() {
                 }
                 if (flag) {
                     curSlot = i;
+                    if (!outerLimits.empty()) {
+                        auto pr = std::make_pair(curLeaf.GetKey(curSlot), curLeaf.GetPtr(curSlot));
+                        RM_Record rec = GetRecord(pr);
+                        if (rec.valid(meta, outerLimits)) {
+                            return res;
+                        }else {
+                            continue;
+                        }
+                    }
                     return res;
                 }
             }
@@ -219,6 +263,7 @@ std::pair<void*, RM_Rid> IM_IdxIterator::NextPair() {
     return res;
 }
 
+
 RM_Record IM_IdxIterator::NextRec() {
     RM_Record res;
     res.rid.num = -1;
@@ -227,35 +272,7 @@ RM_Record IM_IdxIterator::NextRec() {
         std::cout<<"null pointer\n";
         return res;
     }
-
-    std::string path = idxHandler.GetIdxPath();
-    //std::cout<<path<<std::endl;
-    if (path[path.length() - 1] == '/') {
-        path = path.substr(0, path.length() - 1);
-    }  
-    //std::cout<<tmp<<std::endl;
-    int idx = path.find_last_of('_');
-    if (idx != std::string::npos) {
-        path = path.substr(0, idx);
-    }
-    RM_TableHandler tHandler(path.c_str());
-    //std::cout<<path<<std::endl;
- 
-    if (tHandler.GetFileHdr().blkCnt <= pr.second.num)
-    {
-        std::cout<<"block " << pr.second.num <<" out of range "<<tHandler.GetFileHdr().blkCnt<<std::endl;
-        return res;
-    }
-    res.rid = pr.second;
-    MM_PageHandler pHdr;
-    RM_RecHdr tmpRHdr;
-    int off = sizeof(MM_PageHdr) + res.rid.slot * sizeof(RM_RecHdr);
-    gBuffer->GetPage(FM_Bid(tHandler.GetFd(), res.rid.num), pHdr);
-    memcpy(&tmpRHdr, pHdr.GetPtr(off), sizeof(RM_RecHdr));
-    res.len = tmpRHdr.len;
-    res.addr = pHdr.GetPtr(tmpRHdr.off);
-    res.InitPrefix(tHandler.GetMeta());
-    return res;
+    return GetRecord(pr);
 }
 
 RC IM_IdxIterator::SetLimits(const std::vector<DB_Opt>& rawLim) {

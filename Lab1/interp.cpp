@@ -19,7 +19,9 @@
 #include "utils/AggFun.h"
 #include "utils/Optrs.h"
 #include "utils/RC.h"
+#include "utils/RelAttrUtil.h"
 #include "parser.tab.hpp"
+
 
 
 
@@ -67,8 +69,86 @@ static void print_values(NODE *n);
  */
 RC interp(NODE *n)
 {
+   RC errval = SUCCESS;
    //std::cout<<"Not Implemented"<<std::endl;
-   return SUCCESS;
+   switch(n -> kind) {
+      case N_CREATETABLE:
+         {
+            break;
+         }
+      case N_CREATEINDEX:
+         {
+            break;
+         }
+      case N_DROPINDEX:
+         {
+            break;
+         }
+      case N_DROPTABLE:
+         {
+            break;
+         }
+      case N_QUERY:
+         {
+            std::vector<MRelAttr> selAttrs;
+            std::vector<std::string> rels;
+            std::vector<DB_Cond> conds;
+            NODE * listPtr = n->u.QUERY.rellist;
+            while(listPtr != NULL) {
+               NODE* tmpPtr = listPtr->u.LIST.curr;
+               rels.push_back(tmpPtr->u.RELATION.relname);
+               listPtr = listPtr->u.LIST.next;
+            }
+            listPtr = n->u.QUERY.relattrlist;
+            while(listPtr != NULL) {
+               NODE* tmpPtr = listPtr->u.LIST.curr;
+               std::string relN, attrN;
+               relN = tmpPtr->u.AGGRELATTR.relname == NULL ? "" : tmpPtr->u.AGGRELATTR.relname;
+               attrN = tmpPtr->u.AGGRELATTR.attrname;
+               if (attrN == "*") {
+                  ExpandAttrs(selAttrs, rels);
+                  break;
+               }else {
+                  selAttrs.push_back(MRelAttr(relN, attrN));
+               }
+               listPtr = listPtr->u.LIST.next;
+            }
+            listPtr = n->u.QUERY.conditionlist;
+            while (listPtr != NULL) {
+               NODE* tmpPtr = listPtr->u.LIST.curr;
+               DB_Cond cond;
+               cond.lTblName = tmpPtr->u.CONDITION.lhsRelattr->u.RELATTR.relname == NULL ? "" : tmpPtr->u.CONDITION.lhsRelattr->u.RELATTR.relname;
+               cond.lColName = tmpPtr->u.CONDITION.lhsRelattr->u.RELATTR.attrname;
+               cond.optr = tmpPtr->u.CONDITION.op;
+               if (tmpPtr->u.CONDITION.rhsRelattr == NULL) {
+                  cond.isConst = true;
+                  cond.type = tmpPtr->u.CONDITION.rhsValue->u.VALUE.type;
+                  switch (cond.type) {
+                     case DB_INT:
+                        cond.data.iData = tmpPtr->u.CONDITION.rhsValue->u.VALUE.ival;
+                        break;
+                     case DB_DOUBLE:
+                        cond.data.lfData = tmpPtr->u.CONDITION.rhsValue->u.VALUE.rval;
+                        break;
+                     case DB_STRING:
+                        strcpy(cond.data.sData, tmpPtr->u.CONDITION.rhsValue->u.VALUE.sval);
+                        break;
+                  }
+                  //tmpPtr->u.CONDITION.rhsValue->u.VALUE
+               }else {
+                  cond.isConst = false;
+                  cond.rColName = tmpPtr->u.CONDITION.rhsRelattr->u.RELATTR.attrname;
+                  cond.rTblName = tmpPtr->u.CONDITION.rhsRelattr->u.RELATTR.relname == NULL ? "" : tmpPtr->u.CONDITION.rhsRelattr->u.RELATTR.relname;
+               }
+               listPtr = listPtr->u.LIST.next;
+            }
+            errval = pQm->Select(selAttrs, rels, conds);
+            break;
+         }
+         
+
+   }
+   return errval;
 }
 
 

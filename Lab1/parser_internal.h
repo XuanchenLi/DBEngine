@@ -15,7 +15,7 @@
 /*
  * use double for real
  */
-typedef float real;
+typedef double real;
 
 /*
  * the prompt

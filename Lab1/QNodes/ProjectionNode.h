@@ -10,6 +10,7 @@ public:
     ProjectionNode():DB_Iterator() {srcIter = nullptr;  content=nullptr;}
     RC SetSrcIter(DB_Iterator* src) {
         srcIter = src;
+        hasReseted = false;
         return SUCCESS;
         //return Reset();
     }
@@ -19,6 +20,9 @@ public:
         if (srcIter == nullptr) {
             return FAILURE;
         }
+        if (hasReseted)
+            return SUCCESS;
+        hasReseted = true;
         srcIter->Reset();
         conflict = srcIter->IsConflict();
         done = !srcIter->HasNext();
@@ -30,15 +34,18 @@ public:
         }
         return srcIter->HasNext();
     }
+    DB_Iterator* clone() {return new ProjectionNode(*this);}
     ~ProjectionNode() {
         if (content != nullptr) {
             delete[] content;
         }
+        if (srcIter != nullptr)
+            delete srcIter;
     }
     ProjectionNode(const ProjectionNode& rhs) : DB_Iterator(rhs) {
         content = new char[meta.GetMaxLen()];
         memcpy(content, rhs.content, meta.GetMaxLen());
-        srcIter = rhs.srcIter;
+        srcIter = rhs.srcIter->clone();
     }
     ProjectionNode& operator=(const ProjectionNode& rhs) {
         DB_Iterator::operator=(rhs);
@@ -49,7 +56,7 @@ public:
             delete [] content;
         content = new char[meta.GetMaxLen()];
         memcpy(content, rhs.content, meta.GetMaxLen());
-        srcIter = rhs.srcIter;
+        srcIter = rhs.srcIter->clone();
         return *this;
     }
     ProjectionNode(ProjectionNode&& rhs) : DB_Iterator(rhs) {

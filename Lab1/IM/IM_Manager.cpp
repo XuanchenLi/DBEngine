@@ -199,12 +199,12 @@ RC IM_Manager::TraverseLeaf(const char* tblPath, int colPos) {
     return iHdl.CloseIdx();
 }
 
-RC GetAvailIndex(std::string tblName, std::vector<int>& colPoses) {
-    colPoses.clear();
+RC IM_Manager::GetAvailIndex(std::string tblName, std::vector<std::pair<std::string, int>>& idxPairs) {
+    idxPairs.clear();
     RM_TableHandler tblHdl((DBT_DIR + IDX_DIC_NAME).c_str());
+    RM_TableHandler tHandler((WORK_DIR + tblName).c_str());
+    auto tMeta = tHandler.GetMeta();
     auto meta = tblHdl.GetMeta();
-    RM_TblIterator iter;
-    tblHdl.GetIter(iter);
 
     std::string dbName = WORK_DIR;
     dbName = dbName.substr(0, dbName.length() - 1);
@@ -222,14 +222,24 @@ RC GetAvailIndex(std::string tblName, std::vector<int>& colPoses) {
     opt.type = DB_STRING;
     strcpy(opt.data.sData, tblName.c_str());
     lims.push_back(opt);
+    RM_TblIterator iter;
+    tblHdl.GetIter(iter);
     iter.SetLimits(lims);
-    auto rec = iter.NextRec();
-    while (rec.rid.num != -1) {
-        int idx;
-        rec.GetColData(meta, 2, &idx);
-        colPoses.push_back(idx);
+    //iter.Reset();
+    RM_Record rec;
+    char str[64];
+    const int colPos = meta.GetPosByName("colPos");
+    while (iter.HasNext()) {
+        int pos;
         rec = iter.NextRec();
+        rec.GetColData(meta, colPos, &pos);
+        idxPairs.push_back(
+            std::make_pair(
+                tMeta.GetNameByPos(pos), pos
+            )
+        );
     }
     return SUCCESS;
 
 }
+

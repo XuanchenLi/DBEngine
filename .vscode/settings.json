@@ -50,7 +50,9 @@
         "dbtype.h": "c",
         "parser_internal.h": "c",
         "parser.h": "c",
-        "scanhelp.c": "cpp"
+        "scanhelp.c": "cpp",
+        "cinttypes": "cpp",
+        "set": "cpp"
     },
     "C_Cpp.errorSquiggles": "enabledIfIncludesResolve"
 }

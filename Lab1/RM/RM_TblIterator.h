@@ -21,7 +21,7 @@ public:
     RC SetLimits(const std::vector<DB_Opt>&);
     RM_Record NextRec();  //num为-1代表读到尾
     RC Reset();
-
+    DB_Iterator* clone() {return new RM_TblIterator(*this);}
 private:
     //bool valid();
     RM_TableHandler tHandler;

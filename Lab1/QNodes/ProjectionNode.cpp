@@ -11,9 +11,11 @@ RM_Record ProjectionNode::NextRec() {
     if (done || conflict) {
         return rec;
     }
+    hasReseted = false;
     RM_Record srcRec = srcIter->NextRec();
     //return srcRec;
     done = !srcIter->HasNext();
+    rec.rid = srcRec.rid;
     rec.addr = content;
     ProjectMemory(content, meta, srcRec, srcIter->GetMeta());
     rec.InitPrefix(meta);

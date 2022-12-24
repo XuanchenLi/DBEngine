@@ -14,7 +14,7 @@ RC ProjectMemory(char* content,
 
 class DB_Iterator {
 public:
-    DB_Iterator() {done = conflict = false;}
+    DB_Iterator() {done = conflict = hasReseted = false;}
     virtual bool HasNext()const {return !done;}
     bool IsConflict() const {return conflict;}
     virtual RM_Record NextRec() = 0;
@@ -26,9 +26,11 @@ public:
     }
     RM_TblMeta GetMeta() {return meta;}
     virtual ~DB_Iterator(){}
+    virtual DB_Iterator* clone() = 0;
 protected:
     bool done;
     bool conflict;
+    bool hasReseted;
     RM_TblMeta meta;
 private:
 
