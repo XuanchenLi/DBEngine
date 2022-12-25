@@ -78,7 +78,9 @@ RM_Record RM_TblIterator::NextRec() {
     MM_PageHandler pHdr;
     RM_RecHdr tmpRHdr;
     int off = sizeof(MM_PageHdr) + curSNum * sizeof(RM_RecHdr);
+    //std::cout<<"1 "<<tHandler.fHandler->IsOpen()<<std::endl;
     gBuffer->GetPage(FM_Bid(tHandler.fHandler->GetFd(), curPNum), pHdr);
+    //std::cout<<"1 "<<tHandler.fHandler->IsOpen()<<std::endl;
     memcpy(&tmpRHdr, pHdr.GetPtr(off), sizeof(RM_RecHdr));
     res.rid.num = curPNum;
     res.rid.slot = curSNum;
@@ -92,6 +94,7 @@ RM_Record RM_TblIterator::NextRec() {
     //td::cout<<tHandler.fHandler->GetBlockNum()<<std::endl;
     //std::cout<<tHandler.fHandler->GetBlockNum()<<std::endl;
     while(curPNum < tHandler.fHandler->GetBlockNum()) {
+        //std::cout<<"2 "<<tHandler.fHandler->IsOpen()<<std::endl;
         gBuffer->GetPage(FM_Bid(tHandler.fHandler->GetFd(), curPNum), pHdr);
         curSNum ++;
         //std::cout<<curPNum<<" "<<curSNum<<" "<<pHdr.GetHeader().slotCnt<<std::endl;

@@ -13,7 +13,7 @@ bool ValidAttr(const std::vector<MRelAttr>& attrs) {
 
     std::string dbName = WORK_DIR;
     dbName = dbName.substr(0, dbName.length() - 1);
-    dbName = dbName.substr(dbName.find_last_of('/'));
+    dbName = dbName.substr(dbName.find_last_of('/') + 1);
 
     RM_Record rec;
     std::vector<DB_Opt> lims;
@@ -30,8 +30,8 @@ bool ValidAttr(const std::vector<MRelAttr>& attrs) {
         opt.colName = "colName";
         strcpy(opt.data.sData, item.colName.c_str());
         lims.push_back(opt);
-        iter.SetLimits(lims);
         tHdl.GetIter(iter);
+        iter.SetLimits(lims);
         //rec = iter.NextRec();
         if (!iter.HasNext()) {
             printf("Attribute Not Found.\n");
@@ -51,7 +51,7 @@ bool ValidRel(const std::vector<std::string>& rels) {
 
     std::string dbName = WORK_DIR;
     dbName = dbName.substr(0, dbName.length() - 1);
-    dbName = dbName.substr(dbName.find_last_of('/'));
+    dbName = dbName.substr(dbName.find_last_of('/') + 1);
 
     RM_Record rec;
     std::vector<DB_Opt> lims;
@@ -65,8 +65,8 @@ bool ValidRel(const std::vector<std::string>& rels) {
         opt.colName = "tblName";
         strcpy(opt.data.sData, item.c_str());
         lims.push_back(opt);
-        iter.SetLimits(lims);
         tHdl.GetIter(iter);
+        iter.SetLimits(lims);
         //rec = iter.NextRec();
         if (!iter.HasNext()) {
             printf("Relation Not Found.\n");
@@ -86,8 +86,8 @@ RC ExpandAttrs(std::vector<MRelAttr>& attrs, const std::vector<std::string>& rel
 
     std::string dbName = WORK_DIR;
     dbName = dbName.substr(0, dbName.length() - 1);
-    dbName = dbName.substr(dbName.find_last_of('/'));
-    
+    dbName = dbName.substr(dbName.find_last_of('/') + 1);
+    //std::cout<<dbName<<std::endl;
     RM_Record rec;
     std::vector<DB_Opt> lims;
     DB_Opt opt;
@@ -99,11 +99,12 @@ RC ExpandAttrs(std::vector<MRelAttr>& attrs, const std::vector<std::string>& rel
     char attrName[64];
     std::string tmpN;
     for (auto item : rels) {
+        //std::cout<<item<<std::endl;
         opt.colName = "tblName";
         strcpy(opt.data.sData, item.c_str());
         lims.push_back(opt);
-        iter.SetLimits(lims);
         tHdl.GetIter(iter);
+        iter.SetLimits(lims);
         if (!iter.HasNext()) {
             std::cout<<"Table "<<item<<" Not Exist.\n";
             return FAILURE;
@@ -118,5 +119,6 @@ RC ExpandAttrs(std::vector<MRelAttr>& attrs, const std::vector<std::string>& rel
         }
         lims.pop_back();
     }
+    //std::cout<<"hhh\n";
     return SUCCESS;
 }

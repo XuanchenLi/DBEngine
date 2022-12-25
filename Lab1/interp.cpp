@@ -95,6 +95,7 @@ RC interp(NODE *n)
             std::vector<DB_Cond> conds;
             NODE * listPtr = n->u.QUERY.rellist;
             int cnt = 0;
+            //std::cout<<"111\n";
             while(listPtr != NULL) {
                NODE* tmpPtr = listPtr->u.LIST.curr;
                rels.push_back(tmpPtr->u.RELATION.relname);
@@ -102,6 +103,7 @@ RC interp(NODE *n)
                cnt++;
             }
             listPtr = n->u.QUERY.relattrlist;
+            //std::cout<<"112\n";
             while(listPtr != NULL) {
                NODE* tmpPtr = listPtr->u.LIST.curr;
                std::string relN, attrN;
@@ -111,15 +113,18 @@ RC interp(NODE *n)
                }
                relN = tmpPtr->u.AGGRELATTR.relname == NULL ? "" : tmpPtr->u.AGGRELATTR.relname;
                attrN = tmpPtr->u.AGGRELATTR.attrname;
+               
                if (attrN == "*") {
                   ExpandAttrs(selAttrs, rels);
                   break;
                }else {
                   selAttrs.push_back(MRelAttr(relN, attrN));
                }
+
                listPtr = listPtr->u.LIST.next;
             }
             listPtr = n->u.QUERY.conditionlist;
+            //std::cout<<"113\n";
             while (listPtr != NULL) {
                NODE* tmpPtr = listPtr->u.LIST.curr;
                DB_Cond cond;
@@ -152,6 +157,7 @@ RC interp(NODE *n)
                }
                listPtr = listPtr->u.LIST.next;
             }
+            //std::cout<<"11\n";
             errval = pQm->Select(selAttrs, rels, conds);
             break;
          }

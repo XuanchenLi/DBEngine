@@ -54,7 +54,7 @@ int main(int argc, char* argv[]) {
     //----------------------------------
     task1(); 
 
-    //task3();
+    task3();
     //testNode();
     //task4();
     //----------------------------------
@@ -398,7 +398,7 @@ void task1() {
     char bN[5][30] = {"Downtown", "Perryridge", "Redwood", "Mianus", "Brighton"};
     double balance;
     RM_RecAux rAux;
-    for (int i = 0; i < 10000; ++i) {
+    for (int i = 0; i < 1000; ++i) {
         rAux.Clear();
         rAux.strValue.push_back(
             std::make_pair<std::string, std::string>("account_number", "A-" + to_string(i))
@@ -457,6 +457,7 @@ void task3() {
     //======================创建索引==========================
     IM_Manager iManager;
     iManager.CreateIndex((WORK_DIR + "account").c_str(), 0);  // 创建索引
+    /*
     IM_IdxHandler iHdl;
     iManager.OpenIndex((WORK_DIR + "account").c_str(), 0, iHdl);  //打开索引
     iHdl.VisualizeNode();  //可视化树状结构
@@ -510,7 +511,7 @@ void task3() {
     iHdl.VisualizeNode();
     iManager.TraverseLeaf((WORK_DIR + "account").c_str(), 0);  //遍历叶子节点
     iHdl.CloseIdx();
-
+    */
 
 }
 

@@ -9,6 +9,7 @@
 
 
 RC QM_Manager::Select(std::vector<MRelAttr>& selAttrs, std::vector<std::string>& relations, std::vector<DB_Cond>& conditions) {
+    //std::cout<<"112\n";
     if (selAttrs.size() == 0 || relations.size() == 0) {
         return BAD_QUERY;
     }
@@ -56,6 +57,7 @@ RC QM_Manager::Select(std::vector<MRelAttr>& selAttrs, std::vector<std::string>&
             return BAD_QUERY;
     }
     //检查存在性
+    std::cout<<"testing relations...\n";
     if (!ValidRel(relations)) {
         return NOT_EXIST;
     }
@@ -69,22 +71,26 @@ RC QM_Manager::Select(std::vector<MRelAttr>& selAttrs, std::vector<std::string>&
     }
     std::sort(allAttrs.begin(), allAttrs.end());
     allAttrs.erase(std::unique(allAttrs.begin(), allAttrs.end()), allAttrs.end());
+    std::cout<<"testing attributes...\n";
     if (!ValidAttr(allAttrs)) {
         return FAILURE;
     }
+    std::cout<<"constructing plan...\n";
     //生成计划
     DB_Iterator* planRoot = generator->generate(
         selAttrs,
         relations,
         conditions
     );
+    std::cout<<planRoot->GetKind()<<std::endl;
     planRoot->Reset();
     auto rMeta = planRoot->GetMeta();
     for (int i = 0; i < rMeta.colNum; ++i) {
         int idx = rMeta.GetIdxByPos(i);
-        printf("%-32s", rMeta.colName[idx]);
+        printf("%-32s", rMeta.colName[idx].c_str());
     }
-    std::string li(32*(rMeta.colNum+1), '-');
+    puts("");
+    std::string li(32*(rMeta.colNum), '-');
     puts(li.c_str());
     RM_Record rec;
     int iData;

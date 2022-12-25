@@ -46,6 +46,7 @@ FM_Manager::~FM_Manager() {
             //std::cout<<"!23"<<std::endl;
             CloseFile(*(kv.second));
         }
+        delete kv.second;
     }
 }
 

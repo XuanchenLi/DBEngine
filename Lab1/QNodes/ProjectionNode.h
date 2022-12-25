@@ -7,7 +7,10 @@
 class ProjectionNode :public DB_Iterator {
 
 public:
-    ProjectionNode():DB_Iterator() {srcIter = nullptr;  content=nullptr;}
+    ProjectionNode():DB_Iterator() {
+        srcIter = nullptr;  content=nullptr;
+        kind = "Projection";
+    }
     RC SetSrcIter(DB_Iterator* src) {
         srcIter = src;
         hasReseted = false;

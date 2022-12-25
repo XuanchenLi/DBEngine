@@ -18,6 +18,7 @@ public:
     IM_IdxIterator(dbType t, int len):attrType(t), attrLen(len), curLeaf(t, len){
         gtOptIdx = -1, nlOptIdx = -1, eqOptIdx = -1, lOptIdx = -1, ngOptIdx = -1;
         limits.clear(), outerLimits.clear();
+        kind = "Index Iterator";
     }
     RC SetOuterLimits(const std::vector<DB_Opt>& rawLim) {
         outerLimits = rawLim;

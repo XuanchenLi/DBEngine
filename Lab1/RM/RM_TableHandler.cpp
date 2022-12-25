@@ -195,7 +195,7 @@ RM_TableHandler::~RM_TableHandler() {
     if (!(fHandler == nullptr)) {
         //std::cout<<123<<std::endl;
         //CloseTbl();
-        delete fHandler;
+        //delete fHandler;
     }
     //delete fHandler;
 }

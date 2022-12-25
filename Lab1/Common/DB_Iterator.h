@@ -24,7 +24,12 @@ public:
         meta = m;
         return SUCCESS;
     }
+    virtual void Print(int level) {
+        std::string li(16 * level, '-');
+        std::cout<<li + kind <<std::endl;
+    }
     RM_TblMeta GetMeta() {return meta;}
+    std::string GetKind() {return kind;}
     virtual ~DB_Iterator(){}
     virtual DB_Iterator* clone() = 0;
 protected:
@@ -32,6 +37,7 @@ protected:
     bool conflict;
     bool hasReseted;
     RM_TblMeta meta;
+    std::string kind;
 private:
 
 };

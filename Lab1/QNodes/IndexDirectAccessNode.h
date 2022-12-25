@@ -15,7 +15,10 @@ public:
         hasReseted = false;
     }
     DB_Iterator* clone() {return new IndexDirectAccessNode(*this);}
-    IndexDirectAccessNode():DB_Iterator() {srcIter = nullptr; content=nullptr;}
+    IndexDirectAccessNode():DB_Iterator() {
+        srcIter = nullptr; content=nullptr;
+        kind = "Index Direct Access";
+        }
     ~IndexDirectAccessNode() {
         if (content != nullptr) {
             delete[] content;

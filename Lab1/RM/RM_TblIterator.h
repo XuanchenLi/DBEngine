@@ -15,7 +15,10 @@ class RM_TblIterator : public DB_Iterator{
 
 friend class RM_TableHandler;
 public:
-    RM_TblIterator(){ curPNum = 1; curSNum = -1;done=false;}
+    RM_TblIterator(){ 
+        curPNum = 1; curSNum = -1;done=false;
+        kind = "Table Iterator";
+    }
     RM_TblIterator(const char* tblName) {SetTbl(tblName);};
     RC SetTbl(const char* tblName);
     RC SetLimits(const std::vector<DB_Opt>&);

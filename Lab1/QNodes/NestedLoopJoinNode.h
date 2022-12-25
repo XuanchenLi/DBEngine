@@ -8,10 +8,11 @@ class NestedLoopJoinNode : public DB_Iterator {
 public:
     RM_Record NextRec();
     RC Reset();
-    
+
     RC SetLimits(std::vector<DB_JoinOpt>& lims) {
         limits = lims;
         hasReseted = false;
+        return SUCCESS;
     }
     RC SetMeta(const RM_TblMeta &m);
     RC SetNames(const std::vector<std::string> lN, const std::vector<std::string> rN) {
@@ -27,7 +28,10 @@ public:
     }
     //bool HasNext()const; //use default is ok
     DB_Iterator* clone() {return new NestedLoopJoinNode(*this);}
-    NestedLoopJoinNode():DB_Iterator() {lhsIter = rhsIter = nullptr;content=nullptr;}
+    NestedLoopJoinNode():DB_Iterator() {
+        lhsIter = rhsIter = nullptr;content=nullptr;
+        kind = "Nested Loop Join";
+        }
     ~NestedLoopJoinNode() {
         if (content != nullptr) {
             delete[] content;

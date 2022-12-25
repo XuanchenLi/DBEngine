@@ -22,7 +22,7 @@ IM_IdxHandler::~IM_IdxHandler()
     {
         // std::cout<<123<<std::endl;
         // CloseTbl();
-        delete fHandler;
+        //delete fHandler;
     }
     // delete fHandler;
 }
