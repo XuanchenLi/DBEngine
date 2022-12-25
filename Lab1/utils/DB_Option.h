@@ -7,7 +7,7 @@
 #include "utils/Optrs.h"
 #include "utils/DBType.h"
 
-
+db_optr InverseOptr(db_optr optr);
 extern bool comp(dbType type, db_optr optr,const void* lhs,const void*rhs);
 
 
@@ -31,6 +31,7 @@ typedef struct DB_JoinOption {
     dbType type;
 
 }DB_JoinOpt;
+
 
 typedef struct DB_NumericOption {
     db_optr optr;
@@ -73,8 +74,6 @@ typedef struct DB_Condition {
     }data;
 }DB_Cond;
 
-DB_Opt TransToOpt(DB_Cond cond);
-
 typedef struct DB_NumericCondition {
     db_optr optr;
     std::string lTblName;
@@ -92,5 +91,7 @@ typedef struct DB_NumericCondition {
 }DB_NumCond;
 
 
+DB_Opt TransToOpt(const DB_Cond cond);
+DB_JoinOpt TransToJoinOpt(const DB_Cond cond);
 
 #endif

@@ -94,15 +94,21 @@ RC interp(NODE *n)
             std::vector<std::string> rels;
             std::vector<DB_Cond> conds;
             NODE * listPtr = n->u.QUERY.rellist;
+            int cnt = 0;
             while(listPtr != NULL) {
                NODE* tmpPtr = listPtr->u.LIST.curr;
                rels.push_back(tmpPtr->u.RELATION.relname);
                listPtr = listPtr->u.LIST.next;
+               cnt++;
             }
             listPtr = n->u.QUERY.relattrlist;
             while(listPtr != NULL) {
                NODE* tmpPtr = listPtr->u.LIST.curr;
                std::string relN, attrN;
+               if (cnt > 1 && tmpPtr->u.AGGRELATTR.relname == NULL) {
+                  std::cout<<"ERROR: NAME NOT COMPLETE.\n";
+                  return BAD_QUERY;
+               }
                relN = tmpPtr->u.AGGRELATTR.relname == NULL ? "" : tmpPtr->u.AGGRELATTR.relname;
                attrN = tmpPtr->u.AGGRELATTR.attrname;
                if (attrN == "*") {
@@ -117,6 +123,10 @@ RC interp(NODE *n)
             while (listPtr != NULL) {
                NODE* tmpPtr = listPtr->u.LIST.curr;
                DB_Cond cond;
+               if (cnt > 1 && tmpPtr->u.CONDITION.lhsRelattr->u.RELATTR.relname == NULL) {
+                  std::cout<<"ERROR: NAME NOT COMPLETE.\n";
+                  return BAD_QUERY;
+               }
                cond.lTblName = tmpPtr->u.CONDITION.lhsRelattr->u.RELATTR.relname == NULL ? "" : tmpPtr->u.CONDITION.lhsRelattr->u.RELATTR.relname;
                cond.lColName = tmpPtr->u.CONDITION.lhsRelattr->u.RELATTR.attrname;
                cond.optr = tmpPtr->u.CONDITION.op;

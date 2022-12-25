@@ -12,6 +12,16 @@ RC QM_Manager::Select(std::vector<MRelAttr>& selAttrs, std::vector<std::string>&
     if (selAttrs.size() == 0 || relations.size() == 0) {
         return BAD_QUERY;
     }
+    if (relations.size() == 1) {
+        for (int i = 0; i < selAttrs.size(); ++i) {
+            selAttrs[i].tblName = relations[0];
+        }
+        for (int i = 0; i < conditions.size(); ++i) {
+            conditions[i].lTblName = relations[0];
+            if (!conditions[i].isConst)
+                conditions[i].rTblName = relations[0];
+        }
+    }
     //检查属性
     for (auto selA : selAttrs) {
         bool flag = false;
@@ -68,6 +78,42 @@ RC QM_Manager::Select(std::vector<MRelAttr>& selAttrs, std::vector<std::string>&
         relations,
         conditions
     );
-    
-
+    planRoot->Reset();
+    auto rMeta = planRoot->GetMeta();
+    for (int i = 0; i < rMeta.colNum; ++i) {
+        int idx = rMeta.GetIdxByPos(i);
+        printf("%-32s", rMeta.colName[idx]);
+    }
+    std::string li(32*(rMeta.colNum+1), '-');
+    puts(li.c_str());
+    RM_Record rec;
+    int iData;
+    double lfData;
+    char sData[64];
+    int cnt = 0;
+    while(planRoot->HasNext()) {
+        cnt++;
+        rec = planRoot->NextRec();
+        for (int i = 0; i < rMeta.colNum; ++i) {
+            int idx = rMeta.GetIdxByPos(i);
+            switch(rMeta.type[idx]) {
+                case DB_INT:
+                    rec.GetColData(rMeta, i, &iData);
+                    printf("%-32d", iData);
+                    break;
+                case DB_DOUBLE:
+                    rec.GetColData(rMeta, i, &lfData);
+                    printf("%-32lf", lfData);
+                    break;
+                case DB_STRING:
+                    rec.GetColData(rMeta, i, sData);
+                    printf("%-32s", sData);
+                    break;
+            }
+        }
+        puts("");
+    }
+    puts(li.c_str());
+    printf("%d rows in set\n", cnt);
+    return SUCCESS;
 }

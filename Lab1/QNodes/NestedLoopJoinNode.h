@@ -8,6 +8,7 @@ class NestedLoopJoinNode : public DB_Iterator {
 public:
     RM_Record NextRec();
     RC Reset();
+    
     RC SetLimits(std::vector<DB_JoinOpt>& lims) {
         limits = lims;
         hasReseted = false;

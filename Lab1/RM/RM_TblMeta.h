@@ -36,6 +36,14 @@ struct RM_TblMeta {
         std::cout<<name<<" Not Exist"<<std::endl;
         return NOT_EXIST;
     }
+    int GetIdxByPos(const int pos) const {
+        for (int i = 0; i < colNum; ++i) {
+            if (colPos[i] == pos)
+                return i;
+        }
+        std::cout<<"Attribute At "<<pos<<" Not Exist"<<std::endl;
+        return NOT_EXIST;
+    }
     int GetIdxByName(const std::string& name) const {
         //std::cout<<name<<std::endl;
         for (int i = 0; i < colNum; ++i) {

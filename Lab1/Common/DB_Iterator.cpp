@@ -63,17 +63,21 @@ RC ProjectMemory(char* content,
             RM_Record srcRec;
             if (std::find(lNames.begin(), lNames.end(), meta.colName[i]) != lNames.end()) {
                 std::string name = meta.colName[i];
+                /*
                 if (name.length() > 3 && name[name.length() - 3] == '(') {
                     name = name.substr(0, name.length() - 3);
                 }
+                */
                 srcRec = lRec;
                 srcPosInfo = srcRec.GetDynamicPosInfo(lMeta, lMeta.GetPosByName(name));
             }
             else {
                 std::string name = meta.colName[i];
+                /*
                 if (name.length() > 3 && name[name.length() - 3] == '(') {
                     name = name.substr(0, name.length() - 3);
                 }
+                */
                 srcRec = rRec;
                 srcPosInfo = srcRec.GetDynamicPosInfo(rMeta, rMeta.GetPosByName(name));
             }
@@ -96,9 +100,11 @@ RC ProjectMemory(char* content,
                 srcMeta = rMeta;
             }
             std::string name = meta.colName[i];
+            /*
             if (name.length() > 3 && name[name.length() - 3] == '(') {
                 name = name.substr(0, name.length() - 3);
             }
+            */
             int srcOff = srcMeta.GetPrefixLen() + 
                         srcMeta.GetStaticPartOff(
                             srcMeta.colPos[srcMeta.GetIdxByName(name)]

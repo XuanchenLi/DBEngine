@@ -9,7 +9,7 @@
 #include "QNodes/IndexDirectAccessNode.h"
 #include "QNodes/NestedLoopJoinNode.h"
 #include "QNodes/ProjectionNode.h"
-#include <set>
+#include <map>
 #include <algorithm>
 
 ProjectionNode* FormProjectionNode(const RM_TblMeta& relMeta, const std::vector<std::string>&selAttrs) {
@@ -25,17 +25,111 @@ ProjectionNode* FormProjectionNode(const RM_TblMeta& relMeta, const std::vector<
         pMeta.colName[num] = attr;
         num++;
     }
+    pMeta.dbName = relMeta.dbName;
+    pMeta.tblName = relMeta.tblName;
     pMeta.colNum = num;
     pIter->SetMeta(pMeta);
     return pIter;
+}
+NestedLoopJoinNode* FormNestedLoopJoinNode(DB_Iterator* lhsIter, DB_Iterator* rhsIter,
+                                const std::vector<MRelAttr>& rSelAttrs, 
+                                const std::vector<DB_Cond>& conds) {
+    std::vector<DB_JoinOpt> joinConds;
+    for (auto cond : conds) {
+        joinConds.push_back(TransToJoinOpt(cond));
+    }
+    std::vector<std::string>lN, rN;
+    auto lhsMeta = lhsIter->GetMeta();
+    auto rhsMeta = rhsIter->GetMeta();
+    for (int i = 0; i < lhsMeta.colNum; ++i)
+        lN.push_back(lhsMeta.colName[i]);
+    for (int i = 0; i < rhsMeta.colNum; ++i)
+        rN.push_back(rhsMeta.colName[i]);
+    RM_TblMeta joinMeta = lhsMeta;
+    for (auto attr : rSelAttrs) {
+        int idx = joinMeta.colNum;
+        int srcIdx = rhsMeta.GetIdxByName(attr.colName);
+        joinMeta.isDynamic[idx] = rhsMeta.isDynamic[srcIdx];
+        joinMeta.length[idx] = rhsMeta.length[srcIdx];
+        joinMeta.type[idx] = rhsMeta.type[srcIdx];
+        joinMeta.colName[idx] = rhsMeta.colName[srcIdx];
+        joinMeta.colPos[idx] = idx;
+        joinMeta.colNum++;
+    }
+    NestedLoopJoinNode* nIter = new NestedLoopJoinNode();
+    nIter->SetSrcIter(lhsIter, rhsIter);
+    nIter->SetNames(lN, rN);
+    nIter->SetMeta(joinMeta);
+    nIter->SetLimits(joinConds);
+    nIter->Reset();
+    return nIter;
 }
 
 
 DB_Iterator* QM_CommonGenerator::generate(const std::vector<MRelAttr>& selAttrs, 
                         const std::vector<std::string>& relations, 
                         const std::vector<DB_Cond>& conditions) {
-    
+    std::vector<DB_Iterator*> iterVec = generateLeaf(
+        selAttrs, relations, conditions
+    );
+    if (iterVec.size() == 1)
+        return iterVec[0];
+    std::vector<MRelAttr> rSelectedAttrs;
+    std::vector<DB_Cond> relatedConds;
+    std::map<std::string, int> dupName;
+    auto meta0 = iterVec[0]->GetMeta();
+    for  (int i = 0; i < meta0.colNum; ++i) {
+        dupName[meta0.colName[i]] = 0;
+    }
+    for (int i = 1; i < iterVec.size(); ++i) {
+        rSelectedAttrs.clear();
+        for (auto attr : selAttrs) {
+            if (attr.tblName == relations[i]) {
+                rSelectedAttrs.push_back(attr);
+            }
+        }
+        relatedConds.clear();
+        for (auto cond : conditions) {
+            if (!cond.isConst && cond.rTblName != cond.lTblName) {  //除去自约束和常量约束
+                if (cond.lTblName == relations[i] ) {
+                    swap(cond.lTblName, cond.rTblName);
+                    swap(cond.lColName, cond.rColName);
+                    cond.optr = InverseOptr(cond.optr);
+                }
+                relatedConds.push_back(cond);
+            }
+        }
 
+        auto metai = iterVec[i]->GetMeta();
+        for (int j = 0; j < metai.colNum; ++j) {
+            if (dupName.find(metai.colName[j]) == dupName.end()) {
+                dupName[metai.colName[j]] = 0;
+            }else {
+                //重名字段
+                int id = ++dupName[metai.colName[j]];  //获取id
+                std::string sfx = "(" + std::to_string(id) + ")";
+                //修改属性名
+                for (int k = 0; k < rSelectedAttrs.size(); ++k) {
+                    if (rSelectedAttrs[k].colName == metai.colName[j]) {
+                        rSelectedAttrs[k].colName += sfx;
+                        break;
+                    }
+                }
+                for (int k = 0; k < relatedConds.size(); ++k) {
+                    if (relatedConds[k].rColName == metai.colName[j]) {
+                       relatedConds[k].rColName += sfx;
+                    }
+                }
+                metai.colName[j] += sfx;
+            }
+        }
+
+        iterVec[0] = FormNestedLoopJoinNode(
+            iterVec[0], iterVec[i], rSelectedAttrs, relatedConds
+        );
+    }
+
+    return iterVec[0];
 }
 
 
@@ -64,6 +158,7 @@ DB_Iterator* QM_CommonGenerator::generateOne(
         if (cond.isConst) {
             singleConds.push_back(TransToOpt(cond));
         }
+        //自约束
     }
     //去重
     std::sort(uniqueSet.begin(), uniqueSet.end());
@@ -125,6 +220,8 @@ DB_Iterator* QM_CommonGenerator::generateOne(
             idxAceNode->SetSrcIter(idxIter);
             RM_TblMeta meta;
             int attrIdx = relMeta.GetIdxByName(attrName);
+            meta.dbName = relMeta.dbName;
+            meta.tblName = relMeta.tblName;
             meta.isDynamic[0] = false;
             meta.colNum = 1;
             meta.colPos[0] = 0;
@@ -191,5 +288,37 @@ DB_Iterator* QM_CommonGenerator::generateOne(
 std::vector<DB_Iterator*> QM_CommonGenerator::generateLeaf(const std::vector<MRelAttr>& selAttrs, 
                         const std::vector<std::string>& relations, 
                         const std::vector<DB_Cond>& conditions) {
-
+    std::vector<DB_Iterator*> resVec;
+    std::vector<std::string> attrs;
+    std::vector<DB_Cond> conds;
+    for (auto relName : relations) {
+        attrs.clear();
+        conds.clear();
+        for (auto attr : selAttrs) {
+            if (attr.tblName == relName)
+                attrs.push_back(attr.colName);
+        }
+        bool isAux = false;
+        if (attrs.empty())
+            isAux = true;
+        for (auto cond : conditions) {
+            if (cond.lTblName == relName || cond.rTblName == relName) {
+                conds.push_back(cond);
+                if (isAux) {
+                    if (cond.lTblName == relName) {
+                        attrs.push_back(cond.lColName);
+                    }
+                    if (cond.rTblName == relName) {
+                        attrs.push_back(cond.rColName);
+                    }
+                }
+            }
+        }
+        resVec.push_back(
+            generateOne(
+                relName, attrs, conds
+            )
+        );
+    }
+    return resVec;
 }
