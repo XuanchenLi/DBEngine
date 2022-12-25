@@ -246,7 +246,7 @@ std::pair<void*, RM_Rid> IM_IdxIterator::NextPair() {
                 break;
             }else {
                 idxHandler.GetNextLeaf(curLeaf);
-                curSlot = 0;
+                curSlot = -1;
                 if (eqOptIdx != -1 && comp(attrType, LESS, limits[eqOptIdx].data.sData, curLeaf.GetKey(0))) {
                     //printf("asd\n");
                     done = true;

@@ -186,6 +186,7 @@ DB_Iterator* QM_CommonGenerator::generateOne(
         ProjectionNode* pIter = FormProjectionNode(relMeta, selAttrs);
         pIter->SetSrcIter(iter);
         pIter->Reset();
+        //printf("asasasd\n");
         return pIter;
     }
     //表上有索引

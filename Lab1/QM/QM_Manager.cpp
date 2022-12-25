@@ -82,8 +82,9 @@ RC QM_Manager::Select(std::vector<MRelAttr>& selAttrs, std::vector<std::string>&
         relations,
         conditions
     );
-    std::cout<<planRoot->GetKind()<<std::endl;
     planRoot->Reset();
+    std::cout<<"---------Plan---------\n";
+    planRoot->Print(0);
     auto rMeta = planRoot->GetMeta();
     for (int i = 0; i < rMeta.colNum; ++i) {
         int idx = rMeta.GetIdxByPos(i);

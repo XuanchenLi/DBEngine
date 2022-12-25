@@ -11,6 +11,11 @@ public:
         srcIter = nullptr;  content=nullptr;
         kind = "Projection";
     }
+    virtual void Print(int level) {
+        DB_Iterator::Print(level);
+        if (srcIter != nullptr)
+            srcIter->Print(level + 1);
+    }
     RC SetSrcIter(DB_Iterator* src) {
         srcIter = src;
         hasReseted = false;

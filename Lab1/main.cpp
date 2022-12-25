@@ -460,17 +460,22 @@ void task3() {
     /*
     IM_IdxHandler iHdl;
     iManager.OpenIndex((WORK_DIR + "account").c_str(), 0, iHdl);  //打开索引
-    iHdl.VisualizeNode();  //可视化树状结构
-    iManager.TraverseLeaf((WORK_DIR + "account").c_str(), 0);  //遍历叶子节点
+    //iHdl.VisualizeNode();  //可视化树状结构
+    //iManager.TraverseLeaf((WORK_DIR + "account").c_str(), 0);  //遍历叶子节点
+    
+    
     //======================条件遍历==========================
     RM_TableHandler tHandler((WORK_DIR + "account").c_str());
     iManager.OpenIndex((WORK_DIR + "account").c_str(), 0, iHdl);
     IM_IdxIterator idxIter(iHdl.GetType(), iHdl.GetLen());
     
     iHdl.GetIter(idxIter);
+
     char tStr1[64];
     char tStr2[64];
     double tLf;
+    */
+    /*
     std::vector<DB_NumOpt> lims;
     DB_NumOpt opt;
     opt.colPos = 0, opt.type = iHdl.GetType();
@@ -481,15 +486,20 @@ void task3() {
     strcpy(opt.data.sData, "A-700");
     lims.push_back(opt);
     idxIter.SetLimits(lims);
-
+    
+    idxIter.Reset();
+    int cnt = 0;
     while(idxIter.HasNext()) {
+        cnt++;
         auto rec = idxIter.NextRec();
         rec.GetColData(tHandler.GetMeta(), 0, tStr1);
         rec.GetColData(tHandler.GetMeta(), 1, tStr2);
         rec.GetColData(tHandler.GetMeta(), 2, &tLf);
         printf("%s %s %lf\n", tStr1, tStr2, tLf);
     }
-    
+    std::cout<<cnt<<std::endl;
+    */
+    /*
     //===========================一隔一删除一半索引项===============
     RM_TblIterator iter;
     RM_TableHandler tblHandler((WORK_DIR + "account").c_str());

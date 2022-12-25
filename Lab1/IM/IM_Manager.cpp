@@ -77,10 +77,12 @@ RC IM_Manager::CreateIndex(const char* tblPath, int colPos) {
     RM_TblIterator iter;
     tblHdl.OpenTbl(tblPath);
     tblHdl.GetIter(iter);
+    iter.Reset();
     RM_Record rec;
-    rec = iter.NextRec();
+    //rec = iter.NextRec();
     
-    while(rec.rid.num != -1) {
+    while(iter.HasNext()) {
+        rec = iter.NextRec();
         void* tp = nullptr;
         switch(iHdl.GetType()) {
         case DB_INT:
@@ -100,7 +102,7 @@ RC IM_Manager::CreateIndex(const char* tblPath, int colPos) {
         //printf("%s\n", tp);
         iHdl.InsertEntry(tp, rec.rid);
 
-        rec = iter.NextRec();
+        //rec = iter.NextRec();
     }
     
     tblHdl.CloseTbl();
@@ -208,7 +210,7 @@ RC IM_Manager::GetAvailIndex(std::string tblName, std::vector<std::pair<std::str
 
     std::string dbName = WORK_DIR;
     dbName = dbName.substr(0, dbName.length() - 1);
-    dbName = dbName.substr(dbName.find_last_of('/'));
+    dbName = dbName.substr(dbName.find_last_of('/') + 1);
 
     std::vector<DB_Opt> lims;
     DB_Opt opt;

@@ -8,6 +8,11 @@ class IndexDirectAccessNode : public DB_Iterator {
 public:
     RM_Record NextRec();
     RC Reset();
+    virtual void Print(int level) {
+        DB_Iterator::Print(level);
+        if (srcIter != nullptr)
+            srcIter->Print(level + 1);
+    }
     RC SetMeta(const RM_TblMeta &m);
     bool HasNext()const;
     void SetSrcIter(IM_IdxIterator* src) {
