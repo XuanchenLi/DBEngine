@@ -25,7 +25,7 @@ public:
         return SUCCESS;
     }
     virtual void Print(int level) {
-        std::string li(16 * level, '-');
+        std::string li(8 * level, '-');
         std::cout<<li + kind <<std::endl;
     }
     RM_TblMeta GetMeta() {return meta;}

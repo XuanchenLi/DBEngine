@@ -207,6 +207,7 @@ typedef struct RM_Record {
 
     }
     bool valid(const RM_TblMeta& meta, const std::vector<DB_Opt>& lims) {
+        
         if (lims.empty())
             return true;
         for (int i = 0; i < lims.size(); ++i) {
@@ -336,6 +337,7 @@ typedef struct RM_Record {
                                 re=false;
                             break;
                         case DB_DOUBLE:
+                        //std::cout<<lims[i].data.lfData<<std::endl;
                             if (*(double*)ptr <= lims[i].data.lfData)
                                 re=false;
                             break;

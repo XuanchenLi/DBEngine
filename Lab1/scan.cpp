@@ -790,13 +790,13 @@ YY_RULE_SETUP
 case 7:
 YY_RULE_SETUP
 #line 26 "scan.l"
-{sscanf(yytext, "%f", &yylval.rval);
+{sscanf(yytext, "%lf", &yylval.rval);
                       return T_REAL;}
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
 #line 28 "scan.l"
-{sscanf(yytext, "%f", &yylval.rval);
+{sscanf(yytext, "%lf", &yylval.rval);
                              return T_REAL;}
 	YY_BREAK
 case 9:

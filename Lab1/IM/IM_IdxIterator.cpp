@@ -133,6 +133,7 @@ RM_Record IM_IdxIterator::GetRecord(std::pair<void*, RM_Rid>& pr) {
 RC IM_IdxIterator::Reset() {
     if (hasReseted)
         return SUCCESS;
+    //DB_Iterator::Reset();
     hasReseted = true;
     done = false;
     gtOptIdx = -1, nlOptIdx = -1, eqOptIdx = -1, lOptIdx = -1, ngOptIdx = -1;
@@ -283,7 +284,7 @@ RC IM_IdxIterator::SetLimits(const std::vector<DB_Opt>& rawLim) {
 
     std::string dbName = WORK_DIR;
     dbName = dbName.substr(0, dbName.length() - 1);
-    dbName = dbName.substr(dbName.find_last_of('/'));
+    dbName = dbName.substr(dbName.find_last_of('/') + 1);
 
     RM_Record rec;
     std::vector<DB_Opt> lims;
@@ -304,6 +305,8 @@ RC IM_IdxIterator::SetLimits(const std::vector<DB_Opt>& rawLim) {
     if (idx != std::string::npos) {
         path = path.substr(idx + 1);
     }
+    path = path.substr(0, path.find_last_of('_'));
+    //std::cout<<dbName<<" "<<path<<std::endl;
     strcpy(cond.data.sData, path.c_str());
     lims.push_back(cond);
     cond.colName = "colName";
@@ -315,17 +318,19 @@ RC IM_IdxIterator::SetLimits(const std::vector<DB_Opt>& rawLim) {
         memcpy(&opt.data.sData, &item.data.sData, sizeof(item.data));
         strcpy(cond.data.sData, item.colName.c_str());
         lims.push_back(cond);
-        iter.SetLimits(lims);
         tHdl.GetIter(iter);
-        rec = iter.NextRec();
-        if (rec.rid.num == -1) {
+        iter.SetLimits(lims);
+        //rec = iter.NextRec();
+        if (!iter.HasNext()) {
             printf("Attribute Not Found.\n");
             return false;
         }
+        rec = iter.NextRec();
         rec.GetColData(tHdl.GetMeta(), 5, &opt.colPos);
         nLims.push_back(opt);
         lims.pop_back();
     }
+    std::cout<<nLims.size()<<std::endl;
     return SetLimits(nLims);
 
 }

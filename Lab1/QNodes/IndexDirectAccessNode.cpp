@@ -48,12 +48,12 @@ RM_Record IndexDirectAccessNode::NextRec() {
     return rec;
 }
 RC IndexDirectAccessNode::Reset() {
-    DB_Iterator::Reset();
     if (srcIter == nullptr) {
         return FAILURE;
     }
     if (hasReseted)
         return SUCCESS;
+    DB_Iterator::Reset();
     hasReseted = true;
     srcIter->Reset();
     conflict = srcIter->IsConflict();

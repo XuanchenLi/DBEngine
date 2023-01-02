@@ -74,6 +74,7 @@ RC interp(NODE *n)
    switch(n -> kind) {
       case N_CREATETABLE:
          {
+
             break;
          }
       case N_CREATEINDEX:
@@ -107,14 +108,17 @@ RC interp(NODE *n)
             while(listPtr != NULL) {
                NODE* tmpPtr = listPtr->u.LIST.curr;
                std::string relN, attrN;
-               if (cnt > 1 && tmpPtr->u.AGGRELATTR.relname == NULL) {
+               relN = tmpPtr->u.AGGRELATTR.relname == NULL ? "" : tmpPtr->u.AGGRELATTR.relname;
+               attrN = tmpPtr->u.AGGRELATTR.attrname;
+               if (cnt > 1 && tmpPtr->u.AGGRELATTR.relname == NULL && attrN != "*") {
                   std::cout<<"ERROR: NAME NOT COMPLETE.\n";
                   return BAD_QUERY;
                }
-               relN = tmpPtr->u.AGGRELATTR.relname == NULL ? "" : tmpPtr->u.AGGRELATTR.relname;
-               attrN = tmpPtr->u.AGGRELATTR.attrname;
                
                if (attrN == "*") {
+                  if (listPtr->u.LIST.next != NULL) {
+                     return BAD_QUERY;
+                  }
                   ExpandAttrs(selAttrs, rels);
                   break;
                }else {
@@ -143,6 +147,7 @@ RC interp(NODE *n)
                         cond.data.iData = tmpPtr->u.CONDITION.rhsValue->u.VALUE.ival;
                         break;
                      case DB_DOUBLE:
+                     //std::cout<<tmpPtr->u.CONDITION.rhsValue->u.VALUE.type<<std::endl;;
                         cond.data.lfData = tmpPtr->u.CONDITION.rhsValue->u.VALUE.rval;
                         break;
                      case DB_STRING:
@@ -155,6 +160,7 @@ RC interp(NODE *n)
                   cond.rColName = tmpPtr->u.CONDITION.rhsRelattr->u.RELATTR.attrname;
                   cond.rTblName = tmpPtr->u.CONDITION.rhsRelattr->u.RELATTR.relname == NULL ? "" : tmpPtr->u.CONDITION.rhsRelattr->u.RELATTR.relname;
                }
+               conds.push_back(cond);
                listPtr = listPtr->u.LIST.next;
             }
             //std::cout<<"11\n";

@@ -91,6 +91,7 @@ void dbInit(int argc, char* argv[]) {
     WORK_DIR += argv[1];
     WORK_DIR += "/";
     fM_Manager->CreateTblFile((WORK_DIR + "account").c_str());
+    fM_Manager->CreateTblFile((WORK_DIR + "branch").c_str());
 
 
     //--------初始化数据字典结构-------
@@ -155,6 +156,21 @@ void dbInit(int argc, char* argv[]) {
     );
     rAux.strValue.push_back(
         std::make_pair<std::string, std::string>("tblName", "account")
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("colNum", 3)
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("rowNum", 0)
+    );
+    tblHandler.InsertRec(rAux);
+    rAux.Clear();
+    //
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("dbName", argv[1])
+    );
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("tblName", "branch")
     );
     rAux.iValue.push_back(
         std::make_pair<std::string, int>("colNum", 3)
@@ -298,6 +314,88 @@ void dbInit(int argc, char* argv[]) {
     );
     tblHandler.InsertRec(rAux);
     rAux.Clear();
+    //
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("dbName", argv[1])
+    );
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("tblName", "branch")
+    );
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("colName", "branch_name")
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("dataType", DB_STRING)
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("length", 32)
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("colPos", 0)
+    );
+    rAux.bValue.push_back(
+        std::make_pair<std::string, bool>("isPrimary", true)
+    );
+    rAux.bValue.push_back(
+        std::make_pair<std::string, bool>("isDynamic", true)
+    );
+    tblHandler.InsertRec(rAux);
+    rAux.Clear();
+    //
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("dbName", argv[1])
+    );
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("tblName", "branch")
+    );
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("colName", "branch_city")
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("dataType", DB_STRING)
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("length", 20)
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("colPos", 1)
+    );
+    rAux.bValue.push_back(
+        std::make_pair<std::string, bool>("isPrimary", false)
+    );
+    rAux.bValue.push_back(
+        std::make_pair<std::string, bool>("isDynamic", true)
+    );
+    tblHandler.InsertRec(rAux);
+    rAux.Clear();
+    //
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("dbName", argv[1])
+    );
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("tblName", "branch")
+    );
+    rAux.strValue.push_back(
+        std::make_pair<std::string, std::string>("colName", "assets")
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("dataType", DB_DOUBLE)
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("length", 0)
+    );
+    rAux.iValue.push_back(
+        std::make_pair<std::string, int>("colPos", 2)
+    );
+    rAux.bValue.push_back(
+        std::make_pair<std::string, bool>("isPrimary", false)
+    );
+    rAux.bValue.push_back(
+        std::make_pair<std::string, bool>("isDynamic", false)
+    );
+    tblHandler.InsertRec(rAux);
+    rAux.Clear();
+
 
 
     //-------------------------------插入索引系统表字段描述--------------------------------------
@@ -396,9 +494,11 @@ void task1() {
     SString<10> accNum;
     SString<30> branchName;
     char bN[5][30] = {"Downtown", "Perryridge", "Redwood", "Mianus", "Brighton"};
+    char bC[5][30] = {"Brooklyn", "Horseneck", "Palo Alto", "Horseneck", "Brooklyn"};
+    double assets[5] = {9000000.0, 1700000.0, 2100000.0, 400000.0, 7100000.0};
     double balance;
     RM_RecAux rAux;
-    for (int i = 0; i < 1000; ++i) {
+    for (int i = 0; i < 10; ++i) {
         rAux.Clear();
         rAux.strValue.push_back(
             std::make_pair<std::string, std::string>("account_number", "A-" + to_string(i))
@@ -412,7 +512,22 @@ void task1() {
         tblHandler.InsertRec(rAux);
         //std::cout<<tblHandler.GetFileHdr().blkCnt<<std::endl;
     }
-    
+    tblHandler.CloseTbl();
+    tblHandler.OpenTbl((WORK_DIR + "branch").c_str());
+    for (int i = 0; i < 5; ++i) {
+        rAux.Clear();
+        rAux.strValue.push_back(
+            std::make_pair<std::string, std::string>("branch_city", bC[i%5])
+        );
+        rAux.strValue.push_back(
+            std::make_pair<std::string, std::string>("branch_name", bN[i%5])
+        );
+        //balance = assets[i%5];
+        rAux.lfValue.push_back(
+            std::make_pair<std::string, double>("assets", rand() % 100000 + 300000)
+        );
+        tblHandler.InsertRec(rAux);
+    }
     /*
     //--------读出记录----------------
     RM_TblIterator iter;

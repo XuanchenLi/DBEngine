@@ -85,6 +85,7 @@ RC QM_Manager::Select(std::vector<MRelAttr>& selAttrs, std::vector<std::string>&
     planRoot->Reset();
     std::cout<<"---------Plan---------\n";
     planRoot->Print(0);
+    std::cout<<"---------End---------\n";
     auto rMeta = planRoot->GetMeta();
     for (int i = 0; i < rMeta.colNum; ++i) {
         int idx = rMeta.GetIdxByPos(i);
@@ -98,10 +99,13 @@ RC QM_Manager::Select(std::vector<MRelAttr>& selAttrs, std::vector<std::string>&
     double lfData;
     char sData[64];
     int cnt = 0;
+    //std::cout<<planRoot->HasNext()<<std::endl;
     while(planRoot->HasNext()) {
         cnt++;
+        //std::cout<<cnt<<std::endl;
         rec = planRoot->NextRec();
         for (int i = 0; i < rMeta.colNum; ++i) {
+            //std::cout<<i<<std::endl;
             int idx = rMeta.GetIdxByPos(i);
             switch(rMeta.type[idx]) {
                 case DB_INT:

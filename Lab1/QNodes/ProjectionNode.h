@@ -24,12 +24,13 @@ public:
     }
     RM_Record NextRec();
     RC Reset() {
-        DB_Iterator::Reset();
+        
         if (srcIter == nullptr) {
             return FAILURE;
         }
         if (hasReseted)
             return SUCCESS;
+        DB_Iterator::Reset();
         hasReseted = true;
         srcIter->Reset();
         conflict = srcIter->IsConflict();
@@ -40,6 +41,7 @@ public:
         if (srcIter == nullptr) {
             return false;
         }
+        //std::cout<<srcIter->HasNext()<<std::endl;
         return srcIter->HasNext();
     }
     DB_Iterator* clone() {return new ProjectionNode(*this);}

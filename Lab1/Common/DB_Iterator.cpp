@@ -52,11 +52,15 @@ RC ProjectMemory(char* content,
                 const RM_TblMeta &meta,
                 const RM_Record& lRec, const RM_TblMeta &lMeta, std::vector<std::string> lNames, 
                 const RM_Record& rRec, const RM_TblMeta &rMeta, std::vector<std::string> rNames) {
+    //std::cout<<"123123\n";
+    
     memcpy(content, lRec.addr, sizeof(bool));
+    //std::cout<<"hasdhash\n";
     int dColNum = meta.GetDynamicNum();
     int dCnt = 0, dOff = meta.GetPrefixLen() + meta.GetStaticPartLen();
     memcpy(content + sizeof(bool), &dColNum, sizeof(int));
     for (int i = 0; i < meta.colNum; ++i) {
+        //std::cout<<i<<std::endl;
         if (meta.isDynamic[i]) {
             PosInfo posInfo;
             PosInfo srcPosInfo;

@@ -38,6 +38,7 @@ NestedLoopJoinNode* FormNestedLoopJoinNode(DB_Iterator* lhsIter, DB_Iterator* rh
     for (auto cond : conds) {
         joinConds.push_back(TransToJoinOpt(cond));
     }
+    //std::cout<<conds.size()<<std::endl;
     std::vector<std::string>lN, rN;
     auto lhsMeta = lhsIter->GetMeta();
     auto rhsMeta = rhsIter->GetMeta();
@@ -69,6 +70,7 @@ NestedLoopJoinNode* FormNestedLoopJoinNode(DB_Iterator* lhsIter, DB_Iterator* rh
 DB_Iterator* QM_CommonGenerator::generate(const std::vector<MRelAttr>& selAttrs, 
                         const std::vector<std::string>& relations, 
                         const std::vector<DB_Cond>& conditions) {
+    //std::cout<<conditions.size()<<std::endl;
     std::vector<DB_Iterator*> iterVec = generateLeaf(
         selAttrs, relations, conditions
     );
@@ -123,7 +125,8 @@ DB_Iterator* QM_CommonGenerator::generate(const std::vector<MRelAttr>& selAttrs,
                 metai.colName[j] += sfx;
             }
         }
-
+        iterVec[i]->SetMeta(metai);
+        //std::cout<<"ashddassha\n"<<std::endl;
         iterVec[0] = FormNestedLoopJoinNode(
             iterVec[0], iterVec[i], rSelectedAttrs, relatedConds
         );
@@ -180,6 +183,7 @@ DB_Iterator* QM_CommonGenerator::generateOne(
         RM_TblIterator* iter = new RM_TblIterator();
         tHandler.GetIter(*iter);
         iter->SetLimits(singleConds);
+        //std::cout<<singleConds[0].data.sData<<std::endl;
         if (selAttrs.size() == relMeta.colNum) {
             return iter;
         }
@@ -203,6 +207,7 @@ DB_Iterator* QM_CommonGenerator::generateOne(
             RM_TblIterator* iter = new RM_TblIterator();
             tHandler.GetIter(*iter);
             iter->SetLimits(singleConds);
+            //std::cout<<singleConds.size();
             if (selAttrs.size() == relMeta.colNum) {
                 return iter;
             }
@@ -248,6 +253,7 @@ DB_Iterator* QM_CommonGenerator::generateOne(
             //没有可以利用索引提前判断的约束，返回普通迭代器
             RM_TblIterator* iter = new RM_TblIterator();
             tHandler.GetIter(*iter);
+            //std::cout<<singleConds[0].<<std::endl;
             iter->SetLimits(singleConds);
             if (selAttrs.size() == relMeta.colNum) {
                 return iter;
@@ -258,6 +264,7 @@ DB_Iterator* QM_CommonGenerator::generateOne(
             return pIter;
         }else {
             //利用索引提前判断部分约束
+            //std::cout<<"hhh\n";
             IM_IdxHandler iHdl;
             idxManager.OpenIndex((WORK_DIR + relName).c_str(), idxPos, iHdl);
             IM_IdxIterator* idxIter = new IM_IdxIterator(iHdl.GetType(), iHdl.GetLen());
@@ -274,6 +281,7 @@ DB_Iterator* QM_CommonGenerator::generateOne(
                 }
             }
             idxIter->SetOuterLimits(outerConds);
+            //std::cout<<idxConds.size()<<std::endl;
             idxIter->SetLimits(idxConds);
             if (selAttrs.size() == relMeta.colNum) {
                 return idxIter;
@@ -315,6 +323,7 @@ std::vector<DB_Iterator*> QM_CommonGenerator::generateLeaf(const std::vector<MRe
                 }
             }
         }
+        //std::cout<<"11212\n";
         resVec.push_back(
             generateOne(
                 relName, attrs, conds

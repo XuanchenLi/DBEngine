@@ -23,9 +23,9 @@ s_num                [+\-]?{num}
 [ \n\t]              {/* ignore spaces, tabs, and newlines */}
 {s_num}              {sscanf(yytext, "%d", &yylval.ival);
                       return T_INT;}
-{s_num}\.{num}       {sscanf(yytext, "%f", &yylval.rval);
+{s_num}\.{num}       {sscanf(yytext, "%lf", &yylval.rval);
                       return T_REAL;}
-{s_num}\.{num}[Ee]{s_num}   {sscanf(yytext, "%f", &yylval.rval);
+{s_num}\.{num}[Ee]{s_num}   {sscanf(yytext, "%lf", &yylval.rval);
                              return T_REAL;}
 \"([^\"\n]|(\"\"))*\"       {yylval.sval = get_qstring(yytext, yyleng);
                              return T_QSTRING;}
